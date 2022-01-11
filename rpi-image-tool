@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# This script bind-mounts the current directory into a privileged container to
+# run the supplied script with the supplied image mounted
+
+IMG="$1"
+shift
+docker run --privileged --rm -it -v"${PWD}:/data/local" rpiimagetool:latest $IMG "$@"

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+blkid "${LOOPDEV}"
+blkid "${ROOTDEV}"
+blkid "${BOOTDEV}"
