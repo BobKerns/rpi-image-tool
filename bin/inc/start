@@ -6,8 +6,11 @@
 
 WDIR="/data"
 
-IMG=$1
+export USER_IMG=$1
+export USER_PWD="$(pwd)"
 shift
+
+. ${WDIR}/bin/inc/vars.sh
 
 usage() {
     msg "Usage: $0 <img file> <cmd> <args*>" 1>&2
@@ -16,28 +19,30 @@ usage() {
     exit 255
 }
 
-if [ "$IMG" = "bash" ]; then
+if [ "$USER_IMG" = "bash" ]; then
     # Allow running bash w/o an image, to explore the container
     exec bash
-elif [ -z "$IMG" ]; then
+elif [ -z "$USER_IMG" ]; then
     usage
 fi
 
+# Harmonize relative paths
 cd /data/local
-
-if [ ! -r "$IMG" ]; then
-    msg "Cannot find image file ${IMG}"
-    exit 2
-fi
 
 if [ -z "$*" ]; then
     usage
 fi
 
-. ${WDIR}/bin/inc/vars.sh
+if [ -r "/data/img" ]; then
+    export IMG="/data/img"
+elif [ -r "$IMG" ]; then
+    export IMG="${USER_IMG}"
+else
+    msg "Cannot find image file ${USER_IMG}"
+    exit 2
+fi
 
 do_mount_all
-
 
 msg "RUN: $@"
 "$@"

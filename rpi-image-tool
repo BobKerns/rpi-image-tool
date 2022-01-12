@@ -3,6 +3,80 @@
 # This script bind-mounts the current directory into a privileged container to
 # run the supplied script with the supplied image mounted
 
+abspath() {
+    if [[ -d "$1" ]]; then
+        (cd "$1"; pwd)
+    else
+        (cd "$(dirname "$1")"; echo "$(pwd)/$(basename "$1")")
+    fi
+}
+
+if [ "$1" = '-i' -o "$1" = '--interactive' ]; then
+    TTY="-t"
+    shift
+fi
+
 IMG="$1"
 shift
-docker run --privileged --rm -it -v"${PWD}:/data/local" rpiimagetool:latest $IMG "$@"
+
+INTERACTIVE='-i'
+
+if [ "${IMG}" = 'bash' ]; then
+    INTERACTIVE="-it"
+fi
+
+if [ "$*" = 'bash' ]; then
+    INTERACTIVE="-it"
+fi
+
+export USER_PWD="$(pwd)"
+export USER_NAME="$(whoami)"
+
+declare -a mounts exports mount_args export_args
+mounts=()
+exports=(USER_PWD USER_NAME)
+mount_args=(-v"${PWD}:/data/local")
+export_args=()
+
+if [ ! -z "${IMG}" -a -r "${IMG}" ]; then
+    export USER_ABSIMG="$(abspath "${IMG}")"
+    mounts+=(type=bind,source="${USER_ABSIMG},target=/data/img")
+    exports+=(USER_ABSIMG)
+fi
+
+
+for i in  "${mounts[@]}"; do
+    mount_args+=(--mount "${i}")
+done
+
+for i in  "${exports[@]}"; do
+    export_args+=(--env "${i}")
+done
+
+CIDFILE="/tmp/$$.cid"
+killContainer() {
+    local CID="$(cat "${CIDFILE}")"
+    rm "${CIDFILE}"
+    echo "Stopping ${CID}" 1>&2
+    docker stop -t 5 "${CID}" >/dev/null 2>&1
+    exit 255
+}
+
+if [ "${INTERACTIVE}" = '-it' ]; then
+    docker run --privileged --rm $INTERACTIVE \
+        "${mount_args[@]}" \
+        "${export_args[@]}" \
+        --tmpfs /data/build/tmp:rw,noexec,nosuid,size=100M \
+        rpiimagetool "${IMG}" "$@"
+else
+    # When not in interactive mode, run docker in the background so that bash
+    # can handle SIGINT and stop the container.
+    trap killContainer INT
+    docker run --privileged --rm $INTERACTIVE \
+        --cidfile "${CIDFILE}" \
+        "${mount_args[@]}" \
+        "${export_args[@]}" \
+        --tmpfs /data/build/tmp:rw,noexec,nosuid,size=100M \
+        rpiimagetool "${IMG}" "$@" &
+    wait $!
+fi
