@@ -15,4 +15,4 @@ OUT="${1-$DFLT}"
 shift
 
 
-tar --create --file "${OUT}" "${EXCLUDES[@]}" -C "${ROOTDIR}" --checkpoint=5000 --checkpoint-action='ttyout=%u %T%*\r' .
+tar --create --file "${OUT}" "${EXCLUDES[@]}" -C "${ROOTDIR}" --checkpoint=5000 --checkpoint-action='echo=%u %T%*\r' .
