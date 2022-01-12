@@ -22,7 +22,7 @@ msg() {
 do_unmount() {
     local dir="$1"
     if [ -e "${dir}" -a ! -e "${dir}/.gitignore" ]; then
-	    umount "${dir}"
+	    umount -l -d "${dir}"
 	    msg "${dir} unmounted."
     fi
 }
@@ -33,8 +33,10 @@ do_unmount_all() {
         msg "Removing previous temp ${BUILDTMP}"
         rm -rf "${BUILDTMP}" 2>/dev/null
     fi
+    sync
     do_unmount "${BOOTDIR}"
     do_unmount "${ROOTDIR}"
+    sleep 1
     if [ -e "${LOOPDEV}" ]; then
         kpartx -d "${LOOPDEV}"
         losetup --detach "${LOOPDEV}"
