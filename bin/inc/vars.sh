@@ -70,6 +70,7 @@ do_mount() {
 # Mount our partitions and our temporary work area.
 do_mount_all() {
     do_unmount_all 2>/dev/null
+    mkdir -p "${BUILDTMP}" 2>/dev/null
     msg "Mounting partitions from ${IMG}"
     find_partitions
     trap "do_unmount_all" INT
