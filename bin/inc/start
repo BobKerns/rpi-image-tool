@@ -8,12 +8,11 @@ WDIR="/data"
 
 IMG=$1
 shift
+
 usage() {
-    echo "Usage: $0 <img file> <cmd> <args*>" 1>&2
-    echo "  Root and boot filesystems will be mounted under ${WDIR}/build/root" 1>&2
-    echo "  If the current directory is mounted to ${WDIR}/local," 1>&2
-    echo "  the relative img file path will be the same in both environments" 1>&2
-    echo "  and the bin/ subdirectory will be at ${WDIR}/local/bin and on the path" 1>&2
+    msg "Usage: $0 <img file> <cmd> <args*>" 1>&2
+    msg "  Root and boot filesystems will be mounted under ${WDIR}/build/root" 1>&2
+    msg "  and the supplied command will be executed." 1>&2
     exit 255
 }
 
@@ -27,7 +26,7 @@ fi
 cd /data/local
 
 if [ ! -r "$IMG" ]; then
-    echo "Cannot find image file ${IMG}"
+    msg "Cannot find image file ${IMG}"
     exit 2
 fi
 
@@ -39,7 +38,10 @@ fi
 
 do_mount_all
 
+
+msg "RUN: $@"
 "$@"
+msg "DONE: Exit $?"
 
 # Happens automatically on exit or SIGINT
 #do_unmount_all

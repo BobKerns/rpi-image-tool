@@ -14,19 +14,23 @@ export BOOTDIR="${ROOTDIR}/boot"
 
 SELF=$$
 
+msg() {
+    echo "$@" 1>&2
+}
+
 # Unmount the specified directory
 do_unmount() {
     local dir="$1"
     if [ -e "${dir}" -a ! -e "${dir}/.gitignore" ]; then
 	    umount "${dir}"
-	    echo "${dir} unmounted."
+	    msg "${dir} unmounted."
     fi
 }
 
 # Unmount all our directories,m and clean up our temporary directory.
 do_unmount_all() {
     if [ -d "${BUILDTMP}" ]; then
-        echo "Removing previous temp ${BUILDTMP}"
+        msg "Removing previous temp ${BUILDTMP}"
         rm -rf "${BUILDTMP}" 2>/dev/null
     fi
     do_unmount "${BOOTDIR}"
@@ -44,9 +48,9 @@ find_partitions() {
     export BOOTDEV="/dev/mapper/${PARTS[0]}"
     export ROOTDEV="/dev/mapper/${PARTS[1]}"
     export LOOPDEV="/dev/$(echo "${PARTS[0]}" | sed -E 's/p[0-9]+$//')"
-    echo Found LOOPDEV="${LOOPDEV}"
-    echo Found BOOTDEV="${BOOTDEV}" BOOTDIR="${BOOTDIR}"
-    echo Found ROOTDEV="${ROOTDEV}" ROOTDIR="${ROOTDIR}"
+    msg Found LOOPDEV="${LOOPDEV}"
+    msg Found BOOTDEV="${BOOTDEV}" BOOTDIR="${BOOTDIR}"
+    msg Found ROOTDEV="${ROOTDEV}" ROOTDIR="${ROOTDIR}"
 }
 
 # Mount the specified directory on the specified location
@@ -56,9 +60,9 @@ do_mount() {
     local mountpoint="$2"
     (
         mount -o loop "${mapped}" "${mountpoint}" \
-        && echo "${mapped} mounted on ${mountpoint}"
+        && msg "${mapped} mounted on ${mountpoint}"
     ) || (
-        echo "${mountpoint} mount failed." 1>&2
+        msg "${mountpoint} mount failed." 1>&2
         kill -s INT $SELF
     )
 }
@@ -66,8 +70,7 @@ do_mount() {
 # Mount our partitions and our temporary work area.
 do_mount_all() {
     do_unmount_all 2>/dev/null
-    mkdir "${BUILDTMP}"
-    echo "Mounting partitions from ${IMG}"
+    msg "Mounting partitions from ${IMG}"
     find_partitions
     trap "do_unmount_all" INT
     trap "do_unmount_all" EXIT
@@ -95,7 +98,7 @@ copyUntilInternal() {
         if [ "$line" = "${terminator}" ]; then
             return 0
         else
-            echo "$line"
+            msg "$line"
         fi
     done
 }
@@ -127,7 +130,7 @@ appendLine() {
 install() {
     local file="$1"
     local perms="${2-644}"
-    echo "Installing ${file}"
+    msg "Installing ${file}"
     cp "${ROOTDIR}/${file}" "${SAVED}/${file}"
     cp "${BUILDTMP}/${file}" "${ROOTDIR}/${file}"
     chmod "${perms}" "${ROOTDIR}/${file}"
@@ -137,7 +140,7 @@ install() {
 # to set the permissions on .ssh/ correctly.
 installHome() {
     local user="$1"
-    echo "Installing user files for ${user}"
+    msg "Installing user files for ${user}"
     cp -a "${DATA}/home/${user}" "${ROOTDIR}/home/${user}"
     cp -a "${DATA}/home/${user}/.ssh" "${ROOTDIR}/home/${user}/.ssh"
     find "${ROOTDIR}/home/${user}/.ssh" -type d -exec chmod 700 {} \;
