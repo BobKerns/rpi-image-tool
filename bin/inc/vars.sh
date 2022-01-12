@@ -73,7 +73,6 @@ do_mount_all() {
     mkdir -p "${BUILDTMP}" 2>/dev/null
     msg "Mounting partitions from ${IMG}"
     find_partitions
-    trap "do_unmount_all" INT
     trap "do_unmount_all" EXIT
     do_mount "${ROOTDEV}" "${ROOTDIR}"
     do_mount "${BOOTDEV}" "${BOOTDIR}"
