@@ -1,0 +1,14 @@
+#!/bin/bash
+# Boot a pi image into a temporary container for inspection.
+# Arg 1: image to run. Default: pi:latest
+# Arg 2: Command to run. Default: bash
+# Arg 3-n: Additonal args passed.
+
+# The current working directory is mounted on /host
+
+NAME="${1-pi:latest}"
+shift
+CMD="${1-bash}"
+shift
+
+exec docker run -it --rm -v"${PWD}":/host "${NAME}" "${CMD}"  "$@"

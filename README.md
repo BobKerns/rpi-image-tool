@@ -43,5 +43,19 @@ rpi-image-tool 2021-10-30-raspios-bullseye-arm64.img dockerify - \
 This is packaged in the [`dockerify`](dockerify) script:
 
 ```bash
-./dockerify 2021-10-30-raspios-bullseye-arm64.img myacct/raspios:bullseye
+./dockerify 2021-10-30-raspios-bullseye-arm64.img myacct/pi:bullseye
 ```
+
+The resulting image can be run with the `pi` comamand:
+
+```bash
+./pi myacct/pi:bullseye
+```
+
+This optionally takes a command and arguments; this defaults `bash`.
+
+The image name defaults to `pi:latest`
+
+The current directory is mounted in the image as `/host` to make it easy to transfer files, etc.
+
+On exiting, the container will be deleted. Other behaviors can be had by invoking `docker run` directly, omitting the `--rm` option.

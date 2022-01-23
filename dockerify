@@ -3,5 +3,7 @@
 DIR="$(dirname "$0")"
 IMG="$1"
 shift
+NAME="${1-pi:latest}"
+shift
 
-"${DIR}/rpi-image-tool" "${IMG}" dockerify - | docker import - "$@"
+"${DIR}/rpi-image-tool" "${IMG}" dockerify - | docker import - "${NAME}" "$@"
