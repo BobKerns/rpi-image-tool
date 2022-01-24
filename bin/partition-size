@@ -1,0 +1,146 @@
+#!/bin/bash
+
+# Set the partition size of the Linux partition
+
+CMDNAME="$(basename "$0")"
+
+usage() {
+    {
+        echo "Usage: ${CMDNAME} add|set <size> ＜B|K|M|G>*"
+        echo "Usage: ${CMDNAME} show <B|K|M|G>*"
+        echo "    Default units is K"
+    }>&2
+    exit 255
+}
+
+SUBCMD="${1^^}"
+
+case "${SUBCMD}" in
+    ADD|SET)
+        AMT="${2}"
+        UNITS="${3^^}"
+        ;;
+    SHOW)
+        UNITS="${2^^}"
+        ;;
+    *)
+        usage
+        ;;
+esac
+
+UNITS=${UNITS:-K}
+
+case "${UNITS}" in
+    B)
+        FACTOR=$(( 1 ))
+        ;;
+    K)
+        FACTOR=$(( 1024 ))
+        ;;
+    M)
+        FACTOR=$(( 1024*1024 ))
+        ;;
+    G)
+        FACTOR=$(( 1024*1024*1024 ))
+        ;;
+    *)
+        usage
+        ;;
+esac
+
+PARTITIONS="/tmp/$$.tmp"
+
+cleanup() {
+    rm -rf "${PARTITIONS}"
+}
+
+trap cleanup EXIT
+
+fdisk /data/img >/dev/null <<EOF
+O
+${PARTITIONS}
+EOF
+
+{
+    while read L; do
+        case "${L}" in
+            'label-id: '*)
+                LABELID="${L#label-id: }"
+                ;;
+            /data/img1*)
+                PART1="${L#/data/img1 : }"
+                ;;
+            /data/img2*)
+                PART2="${L#/data/img2 : }"
+                ;;
+            esac
+    done
+}<"${PARTITIONS}"
+
+parse() {
+    local l=$1
+    local -n outvar=$2
+    local -A out
+    local IFS=','
+    local -a sections=($l)
+    local IFS='='
+    local -a k0=(${sections[0]})
+    local -a k1=(${sections[1]})
+    local -a k2=(${sections[2]})
+    # Extract the fields as keys, discading space characters.
+    out=(
+        [${k0[0]// }]="${k0[1]// }"
+        [${k1[0]// }]="${k1[1]// }"
+        [${k2[0]// }]="${k2[1]// }"
+    )
+    outvar=(
+        [${k0[0]// }]="${k0[1]// }"
+        [${k1[0]// }]="${k1[1]// }"
+        [${k2[0]// }]="${k2[1]// }"
+    )
+}
+
+declare -A PARTITION1
+declare -A PARTITION2
+parse "${PART1}" PARTITION1
+parse "${PART2}" PARTITION2
+
+BOOTSIZE=$(( ${PARTITION1[size]} / ${FACTOR} ))
+ROOTSIZE=$(( ${PARTITION2[size]} / ${FACTOR} ))
+
+case "${SUBCMD}" in
+    SHOW)
+        echo "LABEL=${LABELID}"
+        echo "BOOT=${BOOTSIZE}${UNITS}"
+        echo "ROOT=${ROOTSIZE}${UNITS}"
+        case "${UNITS}" in
+            K|M|G)
+                echo "  (Sizes rounded down to the nearest whole ${UNITS})"
+                ;;
+        esac
+        exit 0
+        ;;
+    SET)
+        NEWSIZE=$(( ${AMT} * ${FACTOR} ))
+        ;;
+    ADD)
+        NEWSIZE=$(( ${ROOTSIZE} + ${AMT} * ${FACTOR} ))
+        ;;
+    *)
+        usage
+        ;;
+esac
+
+echo "LABEL=${LABELID}"
+echo "BOOT=${BOOTSIZE}${UNITS}"
+echo "ROOT=${ROOTSIZE}${UNITS} (old)"
+echo "ROOT=${NEWSIZE}${UNITS} (new)"
+
+NEWPART="label: dos
+label-id: ${LABELID}
+device: /data/img
+unit: sectors
+
+/data/img1 : start=${PARTITION1[start]}, size=${PARTITION1[size]}, type=${PARTITION1[type]}
+/data/img2 : start=${PARTITION2[start]}, size=${NEWSIZE}, type=${PARTITION2[type]}
+"
