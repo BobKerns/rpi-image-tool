@@ -113,7 +113,7 @@ copyUntilInternal() {
         if [ "$line" = "${terminator}" ]; then
             return 0
         else
-            msg "$line"
+            echo "$line"
         fi
     done
 }
