@@ -6,8 +6,10 @@
 
 export WDIR="/data"
 
+export INVOKER="${INVOKER-"$(basename "$0")"}"
+
 usage() {
-    echo "Usage: $0 [--verbose|--debug] [--interactive] <img file> <cmd> <args*>" 1>&2
+    echo "Usage: ${INVOKER} [--verbose|--debug] [--interactive] <img file> <cmd> <args*>" 1>&2
     echo "  Root and boot filesystems will be mounted under ${WDIR}/build/root" 1>&2
     echo "  and the supplied command will be executed." 1>&2
     exit 255

@@ -50,10 +50,11 @@ fi
 
 export USER_PWD="$(pwd)"
 export USER_NAME="$(whoami)"
+export INVOKER="$(basename "$0")"
 
 declare -a mounts exports mount_args export_args
 mounts=()
-exports=(USER_PWD USER_NAME)
+exports=(USER_PWD USER_NAME INVOKER)
 mount_args=(-v"${PWD}:/data/local")
 export_args=()
 

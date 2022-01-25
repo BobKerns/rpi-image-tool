@@ -2,12 +2,14 @@
 
 # Set the partition size of the Linux partition
 
-CMDNAME="$(basename "$0")"
+. ${WDIR}/bin/inc/vars.sh
+
+INVOKER="${INVOKER-"$(basename $0)"}"
 
 usage() {
     {
-        echo "Usage: ${CMDNAME} add|set <size> ＜B|K|M|G>*"
-        echo "Usage: ${CMDNAME} show <B|K|M|G>*"
+        echo "Usage: ${INVOKER} add|set <size> ＜B|K|M|G>*"
+        echo "Usage: ${INVOKER} show <B|K|M|G>*"
         echo "    Default units is K"
     }>&2
     exit 255
@@ -22,6 +24,9 @@ case "${SUBCMD}" in
         ;;
     SHOW)
         UNITS="${2^^}"
+        ;;
+    --help|'-?'|help)
+        usage
         ;;
     *)
         usage
