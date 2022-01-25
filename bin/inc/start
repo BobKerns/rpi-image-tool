@@ -6,6 +6,13 @@
 
 export WDIR="/data"
 
+usage() {
+    echo "Usage: $0 [--verbose|--debug] [--interactive] <img file> <cmd> <args*>" 1>&2
+    echo "  Root and boot filesystems will be mounted under ${WDIR}/build/root" 1>&2
+    echo "  and the supplied command will be executed." 1>&2
+    exit 255
+}
+
 case "$1" in
     --debug|-d|-vv)
         DEBUG=yes
@@ -16,6 +23,9 @@ case "$1" in
         VERBOSE=yes
         shift
         ;;
+    --help|'-?')
+        usage
+        ;;
 esac
 
 export USER_IMG="$1"
@@ -24,12 +34,6 @@ shift
 
 . ${WDIR}/bin/inc/vars.sh
 
-usage() {
-    msg "Usage: $0 [--verbose|--debug] <img file> <cmd> <args*>" 1>&2
-    msg "  Root and boot filesystems will be mounted under ${WDIR}/build/root" 1>&2
-    msg "  and the supplied command will be executed." 1>&2
-    exit 255
-}
 
 if [ "$USER_IMG" = "bash" ]; then
     # Allow running bash w/o an image, to explore the container

@@ -11,15 +11,34 @@ abspath() {
     fi
 }
 
-if [ "$1" = '-i' -o "$1" = '--interactive' ]; then
-    TTY="-t"
-    shift
-fi
+# Parse any supplied options.
+IMG=
+OPTIONS=
+INTERACTIVE="-i"
+while [ -z "$IMG" ]; do
+    case "$1" in
+        --interactive|-i)
+            INTERACTIVE="-it"
+            shift
+            ;;
+        --verbose|--debug|-v|-d)
+            # We will pass these on
+            OPTIONS="${OPTIONS} $1"
+            shift
+            ;;
+        --help|'-?')
+            OPTIONS="${OPTIONS} $1"
+            IMG='-'
+            ;;
+        *)
+            IMG="$1"
+            shift
+            ;;
+        esac
+done
 
-IMG="$1"
-shift
-
-INTERACTIVE='-i'
+# Special case bash being supplied either instead of or in addition to
+# the image. In this case, we want a PTY allocated
 
 if [ "${IMG}" = 'bash' ]; then
     INTERACTIVE="-it"
@@ -77,6 +96,6 @@ else
         "${mount_args[@]}" \
         "${export_args[@]}" \
         --tmpfs /data/build/tmp:rw,noexec,nosuid,size=100M \
-        rpiimagetool "${IMG}" "$@" &
+        rpiimagetool $OPTIONS "${IMG}" "$@" &
     wait $!
 fi
