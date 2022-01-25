@@ -9,7 +9,7 @@ export WDIR="/data"
 export INVOKER="${INVOKER-"$(basename "$0")"}"
 
 usage() {
-    echo "Usage: ${INVOKER} [--verbose|--debug] [--interactive] <img file> <cmd> <args*>" 1>&2
+    echo "Usage: ${INVOKER} <cmd> <args*>" 1>&2
     echo "  Root and boot filesystems will be mounted under ${WDIR}/build/root" 1>&2
     echo "  and the supplied command will be executed." 1>&2
     exit 255
@@ -34,7 +34,10 @@ export USER_IMG="$1"
 export USER_PWD="$(pwd)"
 shift
 
-. ${WDIR}/bin/inc/vars.sh
+export CMDDIR="${WDIR}/bin"
+export INCDIR="${CMDDIR}/inc"
+export VARS_IMPORT="${INCDIR}/vars.sh"
+. "${VARS_IMPORT}"
 
 
 if [ "$USER_IMG" = "bash" ]; then
@@ -53,19 +56,25 @@ fi
 
 if [ -r "/data/img" ]; then
     export IMG="/data/img"
+    do_mount_all
+elif [ "${USER_IMG}" = '-' ]; then
+    export IMG=
 elif [ -r "$IMG" ]; then
     export IMG="${USER_IMG}"
+    do_mount_all
 else
     msg "Cannot find image file ${USER_IMG}"
     exit 2
 fi
 
-do_mount_all
+enable -n help
 
 verbose "RUN: $@"
 "$@"
 status=$?
-if [ "${status}" != 0 ]; then
+if [ "${status}" = 127 ]; then
+    msg ERROR: "$1 not found."
+elif [ "${status}" != 0 ]; then
     errmsg="$(errno "${status}" || echo "${status}")"
     msg ERROR: "${errmsg}"
 else

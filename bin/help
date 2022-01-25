@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Invoke other commands with --help
+
+export INVOKER_BASE="${INVOKER_BASE-doo}"
+SUBCMD="$1"
+
+case "${SUBCMD}" in
+    --help|'-?'|'')
+        (
+            echo "Usage ${INVOKER} $(basename "$0") <cmd>"
+            echo "Commands: "
+            find "${CMDDIR}" -type f -maxdepth 1 -printf '  %f\n'
+        )1>&2
+        exit 0
+        ;;
+esac
+
+
+export INVOKER="${INVOKER_BASE} [--verbose|--debug] [--interactive] <.img file>"
+
+exec "${SUBCMD}" --help

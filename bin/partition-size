@@ -2,9 +2,10 @@
 
 # Set the partition size of the Linux partition
 
-. ${WDIR}/bin/inc/vars.sh
 
 INVOKER="${INVOKER-"$(basename $0)"}"
+
+. "${VARS_IMPORT}"
 
 usage() {
     {

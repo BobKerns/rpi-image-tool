@@ -1,5 +1,15 @@
 #!/bin/bash
 
+case "$1" in
+    --help)
+        (
+            echo "List identifying info about an image and its partitions"
+            echo "Usage ${INVOKER} $(basename "$0")"
+        )1>&2
+        exit 0
+        ;;
+esac
+
 blkid "${LOOPDEV}"
 blkid "${ROOTDEV}"
 blkid "${BOOTDEV}"

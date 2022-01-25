@@ -11,11 +11,14 @@ abspath() {
     fi
 }
 
+export INVOKER_BASE="$(basename "$0")"
+export INVOKER="${INVOKER_BASE} [--verbose|--debug] [--interactive] <.img file>"
+
 # Parse any supplied options.
 IMG=
 OPTIONS=
 INTERACTIVE="-i"
-while [ -z "$IMG" ]; do
+while [ -z "$IMG" -a ! -z "$*" ]; do
     case "$1" in
         --interactive|-i)
             INTERACTIVE="-it"
@@ -29,6 +32,11 @@ while [ -z "$IMG" ]; do
         --help|'-?')
             OPTIONS="${OPTIONS} $1"
             IMG='-'
+            export INVOKER="$(basename "$0")"
+            ;;
+        help)
+            IMG='-'
+            export INVOKER="$(basename "$0")"
             ;;
         *)
             IMG="$1"
@@ -50,20 +58,20 @@ fi
 
 export USER_PWD="$(pwd)"
 export USER_NAME="$(whoami)"
-export INVOKER="$(basename "$0")"
 
 declare -a mounts exports mount_args export_args
 mounts=()
-exports=(USER_PWD USER_NAME INVOKER)
+exports=(USER_PWD USER_NAME INVOKER_BASE INVOKER)
 mount_args=(-v"${PWD}:/data/local")
 export_args=()
 
-if [ ! -z "${IMG}" -a -r "${IMG}" ]; then
-    export USER_ABSIMG="$(abspath "${IMG}")"
-    mounts+=(type=bind,source="${USER_ABSIMG},target=/data/img")
-    exports+=(USER_ABSIMG)
+if [ "${IMG}" != '-' ]; then
+    if [ ! -z "${IMG}" -a -r "${IMG}" ]; then
+        export USER_ABSIMG="$(abspath "${IMG}")"
+        mounts+=(type=bind,source="${USER_ABSIMG},target=/data/img")
+        exports+=(USER_ABSIMG)
+    fi
 fi
-
 
 for i in  "${mounts[@]}"; do
     mount_args+=(--mount "${i}")
