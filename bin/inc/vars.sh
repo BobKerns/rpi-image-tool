@@ -34,26 +34,39 @@ debug() {
 # Unmount the specified directory
 do_unmount() {
     local dir="$1"
-    if [ -e "${dir}" -a ! -e "${dir}/.gitignore" ]; then
+    if [ -e "${dir}" ] &&  grep -q "${dir}" /etc/mtab; then
+        sync
 	    umount -l -d "${dir}"
 	    verbose "${dir} unmounted."
     fi
 }
 
-# Unmount all our directories,m and clean up our temporary directory.
-do_unmount_all() {
+# Delete the loopback devices
+do_delete_loop() {
+    if [ -e "${LOOPDEV}" ]; then
+        kpartx -d "${LOOPDEV}"
+    fi
+    if [ -e "${LOOPDEV}" ]; then
+        # May already have been detached.
+        losetup --detach "${LOOPDEV}" 2>/dev/null
+    fi
+}
+
+# Delete our temporary files
+do_delete_tmp() {
     if [ -d "${BUILDTMP}" ]; then
         debug "Removing previous temp ${BUILDTMP}"
         rm -rf "${BUILDTMP}" 2>/dev/null
     fi
-    sync
+}
+
+# Unmount all our directories,m and clean up our temporary directory.
+do_unmount_all() {
+    do_delete_tmp
     do_unmount "${BOOTDIR}"
     do_unmount "${ROOTDIR}"
     sleep 1
-    if [ -e "${LOOPDEV}" ]; then
-        kpartx -d "${LOOPDEV}"
-        losetup --detach "${LOOPDEV}"
-    fi
+    do_delete_loop
 }
 
 # Set LOOPDEV, ROOTDEV, and BOOTDEV to the raw devices
