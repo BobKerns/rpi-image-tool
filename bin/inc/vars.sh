@@ -14,8 +14,21 @@ export BOOTDIR="${ROOTDIR}/boot"
 
 SELF=$$
 
+export VERBOSE="${VERBOSE}"
+export DEBUG="${DEBUG}"
+
 msg() {
     echo "$@" 1>&2
+}
+
+verbose() {
+    test ! -z "${VERBOSE}${DEBUG}" && msg "$@"
+    return 0
+}
+
+debug() {
+    test ! -z "${DEBUG}" && msg "$@"
+    return 0
 }
 
 # Unmount the specified directory
@@ -23,14 +36,14 @@ do_unmount() {
     local dir="$1"
     if [ -e "${dir}" -a ! -e "${dir}/.gitignore" ]; then
 	    umount -l -d "${dir}"
-	    msg "${dir} unmounted."
+	    verbose "${dir} unmounted."
     fi
 }
 
 # Unmount all our directories,m and clean up our temporary directory.
 do_unmount_all() {
     if [ -d "${BUILDTMP}" ]; then
-        msg "Removing previous temp ${BUILDTMP}"
+        debug "Removing previous temp ${BUILDTMP}"
         rm -rf "${BUILDTMP}" 2>/dev/null
     fi
     sync
@@ -50,9 +63,9 @@ find_partitions() {
     export BOOTDEV="/dev/mapper/${PARTS[0]}"
     export ROOTDEV="/dev/mapper/${PARTS[1]}"
     export LOOPDEV="/dev/$(echo "${PARTS[0]}" | sed -E 's/p[0-9]+$//')"
-    msg Found LOOPDEV="${LOOPDEV}"
-    msg Found BOOTDEV="${BOOTDEV}" BOOTDIR="${BOOTDIR}"
-    msg Found ROOTDEV="${ROOTDEV}" ROOTDIR="${ROOTDIR}"
+    verbose Found LOOPDEV="${LOOPDEV}"
+    verbose Found BOOTDEV="${BOOTDEV}" BOOTDIR="${BOOTDIR}"
+    verbose Found ROOTDEV="${ROOTDEV}" ROOTDIR="${ROOTDIR}"
 }
 
 # Mount the specified directory on the specified location
@@ -62,7 +75,7 @@ do_mount() {
     local mountpoint="$2"
     (
         mount -o loop "${mapped}" "${mountpoint}" \
-        && msg "${mapped} mounted on ${mountpoint}"
+        && verbose "${mapped} mounted on ${mountpoint}"
     ) || (
         msg "${mountpoint} mount failed." 1>&2
         kill -s INT $SELF
@@ -73,7 +86,7 @@ do_mount() {
 do_mount_all() {
     do_unmount_all 2>/dev/null
     mkdir -p "${BUILDTMP}" 2>/dev/null
-    msg "Mounting partitions from ${IMG}"
+    verbose "Mounting partitions from ${IMG}"
     find_partitions
     trap "do_unmount_all" EXIT
     do_mount "${ROOTDEV}" "${ROOTDIR}"
@@ -132,7 +145,7 @@ appendLine() {
 install() {
     local file="$1"
     local perms="${2-644}"
-    msg "Installing ${file}"
+    verbose "Installing ${file}"
     cp "${ROOTDIR}/${file}" "${SAVED}/${file}"
     cp "${BUILDTMP}/${file}" "${ROOTDIR}/${file}"
     chmod "${perms}" "${ROOTDIR}/${file}"
@@ -142,7 +155,7 @@ install() {
 # to set the permissions on .ssh/ correctly.
 installHome() {
     local user="$1"
-    msg "Installing user files for ${user}"
+    verbose "Installing user files for ${user}"
     cp -a "${DATA}/home/${user}" "${ROOTDIR}/home/${user}"
     cp -a "${DATA}/home/${user}/.ssh" "${ROOTDIR}/home/${user}/.ssh"
     find "${ROOTDIR}/home/${user}/.ssh" -type d -exec chmod 700 {} \;

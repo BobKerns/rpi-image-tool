@@ -6,14 +6,26 @@
 
 export WDIR="/data"
 
-export USER_IMG=$1
+case "$1" in
+    --debug|-d|-vv)
+        DEBUG=yes
+        VERBOSE=yes
+        shift
+        ;;
+    --verbose|-v)
+        VERBOSE=yes
+        shift
+        ;;
+esac
+
+export USER_IMG="$1"
 export USER_PWD="$(pwd)"
 shift
 
 . ${WDIR}/bin/inc/vars.sh
 
 usage() {
-    msg "Usage: $0 <img file> <cmd> <args*>" 1>&2
+    msg "Usage: $0 [--verbose|--debug] <img file> <cmd> <args*>" 1>&2
     msg "  Root and boot filesystems will be mounted under ${WDIR}/build/root" 1>&2
     msg "  and the supplied command will be executed." 1>&2
     exit 255
@@ -44,9 +56,17 @@ fi
 
 do_mount_all
 
-msg "RUN: $@"
+verbose "RUN: $@"
 "$@"
-msg "DONE: Exit $?"
+status=$?
+if [ "${status}" != 0 ]; then
+    errmsg="$(errno "${status}" || echo "${status}")"
+    msg ERROR: "${errmsg}"
+else
+    verbose "DONE: Exit OK"
+fi
 
 # Happens automatically on exit or SIGINT
 #do_unmount_all
+
+exit "${status}"
