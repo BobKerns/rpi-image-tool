@@ -4,7 +4,7 @@
 ### It mounts the specified disk image file, then runs
 ### the supplied command.
 
-WDIR="/data"
+export WDIR="/data"
 
 export USER_IMG=$1
 export USER_PWD="$(pwd)"
