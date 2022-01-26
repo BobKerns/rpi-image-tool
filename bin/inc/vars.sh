@@ -2,8 +2,8 @@
 
 # Various utility routines. This is intended to be included in other scripts.
 
-WDIR="${WDIR-"$(cd "$(dirname "$0")"; pwd)"}"
-
+DFLT_WDIR="$(cd "$(dirname "$(dirname "$(dirname "$0")")")"; pwd)"
+export WDIR="${WDIR-${DFLT_WDIR}}"]
 export BUILD="${BUILD-"${WDIR}/build"}"
 export BUILDTMP="${BUILD}/tmp"
 export DATA="${WDIR}/data"
