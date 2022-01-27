@@ -52,6 +52,10 @@ i.e. a Raspberry Pi boot image would look like this:
 * `/data/mnt/boot`
 * `/data/mnt/rootfs`
 
+(The partitions have the labels "boot" and "rootfs").
+
+The `partition-size` command would need to be modified to specifically look for the
+last partition as the one to resize, or be modified to use `dd` to actually move later partitions to make room before resizing the filesystem.
 ## Running Raspberry Pi OS
 
 You can run Raspberry Pi OS under `docker`, even on an Intel system, via the `quemu` emulation package.
@@ -91,8 +95,9 @@ On exiting, the container will be deleted. Other behaviors can be had by invokin
 
 ## Scripting
 
-Random one-off updates and modifications are to be discouraged. To achieve a repeatable process, all
-setup should be scripted.
+Random one-off updates and modifications are to be discouraged.
+To achieve a repeatable process, _all_ setup should be scripted.
+Systematically enabling that is the primary purpose of this tool.
 
 If you supply a script to `rpi-image-tool` all of the subcommands will be regular `bash` commands.
 
@@ -106,7 +111,7 @@ friendly for use in scripts itself, perhaps as step near the end of a larger bui
 
 The `rpi-image-tool` can be extended in three ways.
 
-1) scripts in or below the current directory can be referenced by relative pathname and be invoked. They will be run in-context and can access the mounted filesystems, use the
+1) Scripts in or below the current directory can be referenced by relative pathname and be invoked. They will be run in-context and can access the mounted filesystems, use the
 environment variables, and run the other subcommands directly.
 
 2) Scripts placed in a `bin/` subdirectory of the current directory will be on the `$PATH`, and thus can be referenced by name, without the `bin/` prefix.
@@ -191,7 +196,7 @@ The following environment variables are set up prior to invoking the subcommand 
   * A temporary directory
 * `PI_DATA`
   * The `data/` subdirectory on the host, conventional place to load data to install
-* `PI_SAVED
+* `PI_SAVED`
   * The `saved/` subdirectory on the host, where unmodified copies of files to be modified are placed.
 * `PI_ROOT`
   * The path to the mounted root filesystem from the image
