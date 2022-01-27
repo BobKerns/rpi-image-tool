@@ -10,6 +10,6 @@ case "$1" in
         ;;
 esac
 
-blkid "${LOOPDEV}"
-blkid "${ROOTDEV}"
-blkid "${BOOTDEV}"
+blkid "${PI_LOOPDEV}"
+blkid "${PI_BOOTDEV}"
+blkid "${PI_ROOTDEV}"
