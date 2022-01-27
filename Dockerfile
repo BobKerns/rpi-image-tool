@@ -7,7 +7,6 @@ RUN apt update \
     && DEBIAN_FRONTEND=noninteractive apt-get -y install emacs \
     && mkdir -p /data /data/build/root /data/build/root/boot /data/bin /data/local/bin
 ENV PATH "/data/local/bin:/data/bin:${PATH}"
-WORKDIR /data
-COPY bin/ bin/
+COPY bin/ /data/bin/
 WORKDIR /data/local
 ENTRYPOINT ["/data/bin/inc/start"]
