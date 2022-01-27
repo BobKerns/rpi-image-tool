@@ -130,7 +130,9 @@ Setting `$PI_BUILDER` to your new image will cause it to be used instead of the 
 or you can supply the `--builder <image:tag>` option to `rpi-image-tool`.
 
 Scripts should be self-documenting by including a documentation comment at the start.
-Documentation comments are a block of comments starting with `'#### '`. Parameter substitution is performed, so you can reference environment variables or invoke shell commands to generate the docmentation output.
+Documentation comments are a block of comments starting with `'#### '`.
+Parameter substitution is performed, so you can reference environment variables or
+invoke shell commands to generate the documentation output.
 
 The scripts should follow the following format:
 
@@ -160,48 +162,48 @@ The following environment variables are set up prior to invoking the subcommand 
 
 #### From the host environent
 
-* PI_USER_CWD
+* `PI_USER_CWD`
   * The current working directory in the host
-* PI_USER_NAME
+* `PI_USER_NAME`
   * The host user invoking the builder
-* PI_USER_IMAGE_FILE
+* `PI_USER_IMAGE_FILE`
   * The image file path as supplied by the user, for error reporting
-* PI_INVOKER_BASE
+* `PI_INVOKER_BASE`
   * The name of the command used to invoke the builder, for help messages and errors.
-* PI_INVOKER
+* `PI_INVOKER`
   * The help message to use for the builder script and options, up to the subcommand.
-* PI_INTERACTIVE
+* `PI_INTERACTIVE`
   * Non-null iff `--interactive` is specified, or if the command to run is `bash`, `vi`, `nano`, or `emacs`.
-* PI_BUILDER
+* `PI_BUILDER`
   * The name:tag of the docker container that performs the work.
 
 #### In the builder
 
-* PI_INCLUDES
+* `PI_INCLUDES`
   * The directory that holds scripts to be sourced. Currently only `vars.sh`
-* PI_CMDS
+* `PI_CMDS`
   * The directory that contains the subcommands.
-* PI_WORKDIR
+* `PI_WORKDIR`
   * The initial working directory for commands.
-* PI_BUILD
+* `PI_BUILD`
   * A directory for storing values to be stored into the image
-* PI_TMP
+* `PI_TMP`
   * A temporary directory
-* PI_DATA
+* `PI_DATA`
   * The `data/` subdirectory on the host, conventional place to load data to install
-* PI_SAVED
+* `PI_SAVED
   * The `saved/` subdirectory on the host, where unmodified copies of files to be modified are placed.
-* PI_ROOT
+* `PI_ROOT`
   * The path to the mounted root filesystem from the image
-* PI_BOOT
+* `PI_BOOT`
   * The path to the mounted boot filesystem from the image
-* PI_VERBOSE
+* `PI_VERBOSE`
   * non-empty if the `--verbose` flag was supplied.
-* PI_DEBUG
+* `PI_DEBUG`
   * non-empty if the `--debug` flag was supplied
-* PI_BOOTDEV
+* `PI_BOOTDEV`
   * The device name from which the image boot filesystem is mounted.
-* PI_ROOTDEV
+* `PI_ROOTDEV`
   * The device name from which the image root filesystem is mounted.
-* PI_LOOPDEV
+* `PI_LOOPDEV`
   * The device name for the full image file as a block device.
