@@ -36,7 +36,7 @@ Additionally, convenience commands are provided:
 * [`partition-size`](bin/partition-size) - Show the partition sizes, or modify the root partition size.
 
 If invoked via the provided script ([`rpi-image-tool`](rpi-image-tool)), images and scripts can be located in the current working directory or a subdirectory.
-The script mounts this under `/data/local/`, and this becomes the current working directory inside the container, allowing relative paths to work properly.
+The script mounts this under `/data/local/`, and this becomes the current working directory inside the container, allowing relative paths to work properly. (Obviously, relative paths involvig '../' are not supported.)
 
 The `bin/` directory (`/data/local/bin`) under the working directory will be added to `$PATH`, making scripting more convenient.
 
