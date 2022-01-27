@@ -21,7 +21,7 @@ For ease of use, this is packaged behind three front-end scripts:
 
 ## rpi-image-tool
 
->    Usage: rpi-image-tool [--verbose|--debug] [--interactive] [--builder imagename] <.img file> <cmd> <args*>
+> Usage: rpi-image-tool [--verbose|--debug] [--interactive] [--builder imagename] <.img file> \<cmd> \<args*>
 
 Root and boot filesystems will be mounted under `/data/build/root` and `/data/build/root/boot` and the supplied command will be executed.
 
@@ -42,20 +42,6 @@ The `bin/` directory (`/data/local/bin`) under the working directory will be add
 
 The supplied image file will be mounted at `/data/img`, and `$PI_IMAGE_FILE` will point to it. `$PI_USER_IMAGE_FILE` will hold the user-supplied path, useful for error messages.
 
-## Non-Raspberry Pi OS images
-
-In theory there is no reason this could not mount an arbitrary disk image's partitions. However, this has knowledge of the specific partitions, e.g. the first partition is the boot partition and should mount to `/boot`, while the second is the root partition, and no other partitions are examined.
-
-This could be disabled with a `--flat` command-line option. This could mount each partition under /data/mnt,
-i.e. a Raspberry Pi boot image would look like this:
-
-* `/data/mnt/boot`
-* `/data/mnt/rootfs`
-
-(The partitions have the labels "boot" and "rootfs").
-
-The `partition-size` command would need to be modified to specifically look for the
-last partition as the one to resize, or be modified to use `dd` to actually move later partitions to make room before resizing the filesystem.
 ## Running Raspberry Pi OS
 
 You can run Raspberry Pi OS under `docker`, even on an Intel system, via the `quemu` emulation package.
@@ -212,3 +198,20 @@ The following environment variables are set up prior to invoking the subcommand 
   * The device name from which the image root filesystem is mounted.
 * `PI_LOOPDEV`
   * The device name for the full image file as a block device.
+
+## Non-Raspberry Pi OS images
+
+In theory there is no reason this could not mount an arbitrary disk image's partitions. However, this has knowledge of the specific partitions, e.g. the first partition is the boot partition and should mount to `/boot`, while the second is the root partition, and no other partitions are examined.
+
+This could be disabled with a `--flat` command-line option. This could mount each partition under /data/mnt,
+i.e. a Raspberry Pi boot image would look like this:
+
+* `/data/mnt/boot`
+* `/data/mnt/rootfs`
+
+(The partitions have the labels "boot" and "rootfs").
+
+The `partition-size` command would need to be modified to specifically look for the
+last partition as the one to resize, or be modified to use `dd` to actually move later partitions to make room before resizing the filesystem.
+
+As there are other partition layouts in use (e.g. NOOBS), this may be worth the effort.
