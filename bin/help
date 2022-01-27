@@ -1,22 +1,51 @@
 #!/bin/bash
 
-# Invoke other commands with --help
+### Display help for other commands.
 
-export INVOKER_BASE="${INVOKER_BASE-doo}"
+export PI_INVOKER_BASE="${PI_INVOKER_BASE-$0}"
 SUBCMD="$1"
 
 case "${SUBCMD}" in
     --help|'-?'|'')
         (
-            echo "Usage ${INVOKER} $(basename "$0") <cmd>"
+            echo "Usage ${PI_INVOKER} $(basename "$0") <cmd>"
             echo "Commands: "
-            find "${CMDDIR}" -type f -maxdepth 1 -printf '  %f\n'
+            find "${PI_CMDS}" -type f -maxdepth 1 -printf '  %f\n'
         )1>&2
         exit 0
         ;;
 esac
 
 
-export INVOKER="${INVOKER_BASE} [--verbose|--debug] [--interactive] <.img file>"
+. "${PI_CMDS}/inc/vars.sh"
 
-exec "${SUBCMD}" --help
+export PI_INVOKER="${PI_INVOKER_BASE} [--verbose|--debug] [--interactive] <.img file>"
+
+T="$(type -t "${SUBCMD}")"
+case "${T}" in
+    file)
+        if [ -r "${PI_CMDS}/$(basename "${SUBCMD}")" ]; then
+            usage "${PI_CMDS}/${SUBCMD}"
+            exit 0
+        elif [ ! -z "$(which "${SUBCMD}")" ]; then
+            msg "${SUBCMD} runs $(which "${SUBCMD}") with the image mounted."
+            msg "Try ${PI_INVOKER} ${SUBCMD} --help"
+            exit 0
+        else
+            msg "Dunno what ${SUBCMD} is, but bash seems to think it is a file somewhere. 'which ${SUBCMD}' disagrees."
+            exit 0
+        fi
+        ;;
+    alias|keyword|function|builtin)
+        msg "${SUBCMD} is a bash ${T}. It will be run with the image mounted."
+        exit 0;
+        ;;
+    '')
+        msg "${SUBCMD} does not appear to be a valid subcommand."
+        exit 2
+        ;;
+    *)
+        msg "${SUBCMD} is a ${T}, which is not a known type of command."
+        exit 2
+        ;;
+esac

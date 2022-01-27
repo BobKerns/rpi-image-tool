@@ -3,6 +3,7 @@
 # This script bind-mounts the current directory into a privileged container to
 # run the supplied script with the supplied image mounted
 
+# Compute the absolute path for a possibly-relative pathname.
 abspath() {
     if [[ -d "$1" ]]; then
         (cd "$1"; pwd)
@@ -11,65 +12,110 @@ abspath() {
     fi
 }
 
-export INVOKER_BASE="$(basename "$0")"
-export INVOKER="${INVOKER_BASE} [--verbose|--debug] [--interactive] <.img file>"
+export PI_BUILDER=${PI_BUILDER:-rpiimagetool}
+
+export PI_INVOKER_BASE="$(basename "$0")"
+export PI_INVOKER="${PI_INVOKER_BASE} [--verbose|--debug] [--interactive] [--builder imagename] <.img file>"
 
 # Parse any supplied options.
-IMG=
-OPTIONS=
+PI_IMAGE_FILE=
+PI_IMAGE_FILE_DFLT=
+declare -a options=()
 INTERACTIVE="-i"
-while [ -z "$IMG" -a ! -z "$*" ]; do
+while [ -z "${PI_IMAGE_FILE}" -a ! -z "$*" ]; do
     case "$1" in
         --interactive|-i)
             INTERACTIVE="-it"
+            export PI_INTERACTIVE=yes
             shift
             ;;
-        --verbose|--debug|-v|-d)
+        --verbose|-v)
             # We will pass these on
-            OPTIONS="${OPTIONS} $1"
+            options+=(--verbose)
+            shift
+            ;;
+        --debug|-d|-vv)
+            # We will pass these on
+            options+=(--debug)
+            shift
+            ;;
+        --builder|-b)
+            shift
+            export PI_BUILDER="$1"
             shift
             ;;
         --help|'-?')
-            OPTIONS="${OPTIONS} $1"
-            IMG='-'
-            export INVOKER="$(basename "$0")"
+            shift
+            options+=(--help)
+            PI_IMAGE_FILE_DFLT='-'
+            export PI_INVOKER="$(basename "$0")"
             ;;
         help)
-            IMG='-'
-            export INVOKER="$(basename "$0")"
+            PI_IMAGE_FILE='-'
+            export PI_INVOKER="$(basename "$0")"
             ;;
         *)
-            IMG="$1"
+            PI_IMAGE_FILE="$1"
             shift
             ;;
         esac
 done
 
-# Special case bash being supplied either instead of or in addition to
-# the image. In this case, we want a PTY allocated
+# Special case known interactive programs with or without an image file.. In these cases, we want a PTY allocated
 
-if [ "${IMG}" = 'bash' ]; then
-    INTERACTIVE="-it"
+case "${PI_IMAGE_FILE}" in
+    # Instead of image file
+    bash)
+        if [ -z "$*" ]; then
+            ## Only if no arguments (e.g. scripts)
+            export PI_INTERACTIVE=yes
+        fi
+        ;;
+    emacs|vi|nano)
+        export PI_INTERACTIVE=yes
+        ;;
+esac
+
+# In addition to image file
+case "$1" in
+    bash)
+        if [ "$*" = 'bash' ]; then
+            ## Only if no arguments (e.g. scripts)
+            export PI_INTERACTIVE=yes
+        fi
+        ;;
+    emacs|vi|nano)
+        export PI_INTERACTIVE=yes
+        ;;
+esac
+
+if [ ! -z "${PI_INTERACTIVE}" ]; then
+    INTERACTIVE='-it'
 fi
 
-if [ "$*" = 'bash' ]; then
-    INTERACTIVE="-it"
-fi
-
-export USER_PWD="$(pwd)"
-export USER_NAME="$(whoami)"
+export PI_USER_IMAGE_FILE="${PI_IMAGE_FILE}"
+export PI_USER_CWD="$(pwd)"
+export PI_USER_NAME="$(whoami)"
 
 declare -a mounts exports mount_args export_args
 mounts=()
-exports=(USER_PWD USER_NAME INVOKER_BASE INVOKER)
+exports=(
+    PI_USER_CWD
+    PI_USER_NAME
+    PI_USER_IMAGE_FILE
+    PI_INVOKER_BASE
+    PI_INVOKER
+    PI_INTERACTIVE
+    PI_BUILDER
+    )
 mount_args=(-v"${PWD}:/data/local")
 export_args=()
 
-if [ "${IMG}" != '-' ]; then
-    if [ ! -z "${IMG}" -a -r "${IMG}" ]; then
-        export USER_ABSIMG="$(abspath "${IMG}")"
-        mounts+=(type=bind,source="${USER_ABSIMG},target=/data/img")
-        exports+=(USER_ABSIMG)
+if [ "${PI_IMAGE_FILE}" != '-' ]; then
+    if [ ! -z "${PI_IMAGE_FILE}" -a -r "${PI_IMAGE_FILE}" ]; then
+        export PI_IMAGE_USER_ABSOLUTE="$(abspath "${PI_IMAGE_FILE}")"
+        mounts+=(type=bind,source="${PI_IMAGE_USER_ABSOLUTE},target=/data/img")
+        exports+=(PI_IMAGE_USER_ABSOLUTE)
     fi
 fi
 
@@ -95,7 +141,7 @@ if [ "${INTERACTIVE}" = '-it' ]; then
         "${mount_args[@]}" \
         "${export_args[@]}" \
         --tmpfs /data/build/tmp:rw,noexec,nosuid,size=100M \
-        rpiimagetool "${IMG}" "$@"
+        "${PI_BUILDER}" "${options[@]}" "${PI_IMAGE_FILE:-"${PI_IMAGE_FILE_DFLT}"}" "$@"
 else
     # When not in interactive mode, run docker in the background so that bash
     # can handle SIGINT and stop the container.
@@ -105,6 +151,6 @@ else
         "${mount_args[@]}" \
         "${export_args[@]}" \
         --tmpfs /data/build/tmp:rw,noexec,nosuid,size=100M \
-        rpiimagetool $OPTIONS "${IMG}" "$@" &
+        "${PI_BUILDER}" "${options[@]}" "${PI_IMAGE_FILE:-"${PI_IMAGE_FILE_DFLT}"}" "$@" &
     wait $!
 fi

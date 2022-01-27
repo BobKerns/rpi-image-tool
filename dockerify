@@ -1,9 +1,9 @@
 #!/bin/bash
 
 DIR="$(dirname "$0")"
-IMG="$1"
+PI_IMAGE_FILE="$1"
 shift
 NAME="${1-pi:latest}"
 shift
 
-"${DIR}/rpi-image-tool" "${IMG}" dockerify - | docker import - "${NAME}" "$@"
+"${DIR}/rpi-image-tool" "${PI_IMAGE_FILE}" export - | docker import - "${NAME}" "$@"

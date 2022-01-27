@@ -1,14 +1,9 @@
 #!/bin/bash
 
-case "$1" in
-    --help)
-        (
-            echo "List identifying info about an image and its partitions"
-            echo "Usage ${INVOKER} $(basename "$0")"
-        )1>&2
-        exit 0
-        ;;
-esac
+#### List identifying info about an image and its partitions
+#### Usage ${PI_INVOKER} $(basename "$0")
+
+. "${PI_CMDS}/inc/vars.sh"
 
 blkid "${PI_LOOPDEV}"
 blkid "${PI_BOOTDEV}"
