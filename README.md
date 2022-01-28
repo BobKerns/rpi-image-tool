@@ -23,7 +23,8 @@ For ease of use, this is packaged behind three front-end scripts:
 
 > Usage: rpi-image-tool [--verbose|--debug] [--interactive] [--builder imagename] <.img file> \<cmd> \<args*>
 
-Root and boot filesystems will be mounted under `/data/build/root` and `/data/build/root/boot` and the supplied command will be executed.
+Root and boot filesystems will be mounted under `/data/build/root` and `/data/build/root/boot`
+and the supplied command will be executed.
 
 The command can be a local script, or it can be `bash`, `emacs`, `nano`, or `vi` to allow interactive
 exporation or manual modifications. These four default to `--interactive`; other interactive tools may require
@@ -35,12 +36,18 @@ Additionally, convenience commands are provided:
 * [`export`](bin/export) — convert an disk image to a `.tar` file for import with `docker import`
 * [`partition-size`](bin/partition-size) - Show the partition sizes, or modify the root partition size.
 
-If invoked via the provided script ([`rpi-image-tool`](rpi-image-tool)), images and scripts can be located in the current working directory or a subdirectory.
-The script mounts this under `/data/local/`, and this becomes the current working directory inside the container, allowing relative paths to work properly. (Obviously, relative paths involvig '../' are not supported.)
+If invoked via the provided script ([`rpi-image-tool`](rpi-image-tool)), images and scripts can be
+located in the current working directory or a subdirectory.
+The script mounts this under `/data/local/`, and this becomes the current working directory inside the container,allowing relative paths to work properly. (Obviously, relative paths involvig '../' are not supported.)
 
-The `bin/` directory (`/data/local/bin`) under the working directory will be added to `$PATH`, making scripting more convenient.
+The `bin/` directory (`/data/local/bin`) under the working directory will be added to `$PATH`,
+making scripting more convenient.
 
-The supplied image file will be mounted at `/data/img`, and `$PI_IMAGE_FILE` will point to it. `$PI_USER_IMAGE_FILE` will hold the user-supplied path, useful for error messages.
+The supplied image file will be mounted at `/data/img`, and `$PI_IMAGE_FILE` will point to it.
+`$PI_USER_IMAGE_FILE` will hold the user-supplied path, useful for error messages.
+
+The docker container which performs the work must be run as a privileged container, to be able to mount
+the image file's partitions.
 
 ## Running Raspberry Pi OS
 
@@ -52,7 +59,8 @@ Docker's emulation is enabled via the following command:
 docker run --privileged linuxkit/binfmt:v0.8
 ```
 
-To create a Raspberry Pi OS docker image, we need to convert a Raspberry Pi OS Distro (or a micro-SD card) to a docker image with the `dockerify` command:
+To create a Raspberry Pi OS docker image, we need to convert a Raspberry Pi OS Distro (or a micro-SD card)
+to a docker image with the `dockerify` command:
 
 ```bash
 rpi-image-tool 2021-10-30-raspios-bullseye-arm64.img dockerify - \
@@ -77,7 +85,8 @@ The image name defaults to `pi:latest`
 
 The current directory is mounted in the image as `/host` to make it easy to transfer files, etc.
 
-On exiting, the container will be deleted. Other behaviors can be had by invoking `docker run` directly, omitting the `--rm` option.
+On exiting, the container will be deleted. Other behaviors can be had by invoking `docker run` directly,
+omitting the `--rm` option.
 
 ## Scripting
 
@@ -97,12 +106,15 @@ friendly for use in scripts itself, perhaps as step near the end of a larger bui
 
 The `rpi-image-tool` can be extended in three ways.
 
-1) Scripts in or below the current directory can be referenced by relative pathname and be invoked. They will be run in-context and can access the mounted filesystems, use the
+1) Scripts in or below the current directory can be referenced by relative pathname and be invoked.
+They will be run in-context and can access the mounted filesystems, use the
 environment variables, and run the other subcommands directly.
 
-2) Scripts placed in a `bin/` subdirectory of the current directory will be on the `$PATH`, and thus can be referenced by name, without the `bin/` prefix.
+2) Scripts placed in a `bin/` subdirectory of the current directory will be on the `$PATH`, and thus
+can be referenced by name, without the `bin/` prefix.
 
-3) The docker container can be extended by copying additional subcommand scripts to `/data/bin` in your `Dockerfile`
+3) The docker container can be extended by copying additional subcommand scripts to `/data/bin`
+in your `Dockerfile`
 
 e.g.:
 
@@ -201,7 +213,10 @@ The following environment variables are set up prior to invoking the subcommand 
 
 ## Non-Raspberry Pi OS images
 
-In theory there is no reason this could not mount an arbitrary disk image's partitions. However, this has knowledge of the specific partitions, e.g. the first partition is the boot partition and should mount to `/boot`, while the second is the root partition, and no other partitions are examined.
+In theory there is no reason this could not mount an arbitrary disk image's partitions. However,
+this has knowledge of the specific partitions, e.g. the first partition is the boot partition
+and should mount to `/boot`, while the second is the root partition, and no other partitions
+are examined.
 
 This could be disabled with a `--flat` command-line option. This could mount each partition under /data/mnt,
 i.e. a Raspberry Pi boot image would look like this:
@@ -212,6 +227,6 @@ i.e. a Raspberry Pi boot image would look like this:
 (The partitions have the labels "boot" and "rootfs").
 
 The `partition-size` command would need to be modified to specifically look for the
-last partition as the one to resize, or be modified to use `dd` to actually move later partitions to make room before resizing the filesystem.
+last partition as the one to resize, or be modified to use `dd` to actually move later partitionsto make room before resizing the filesystem.
 
 As there are other partition layouts in use (e.g. NOOBS), this may be worth the effort.
