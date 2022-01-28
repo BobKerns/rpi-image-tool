@@ -120,8 +120,8 @@ ROOTSIZE=$(( ${PARTITION2[size]} / ${FACTOR} ))
 case "${SUBCMD}" in
     SHOW)
         echo "LABEL=${LABELID}"
-        echo "BOOT=${BOOTSIZE}${UNITS}"
-        echo "ROOT=${ROOTSIZE}${UNITS}"
+        echo "BOOT=${BOOTSIZE} ${UNITS}"
+        echo "ROOT=${ROOTSIZE} ${UNITS}"
         case "${UNITS}" in
             K|M|G)
                 echo "  (Sizes rounded down to the nearest whole ${UNITS})"
