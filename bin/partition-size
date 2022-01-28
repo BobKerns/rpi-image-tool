@@ -34,6 +34,7 @@ case "${MAYBE_UNITS^^}" in
         ;;
 esac
 
+df
 
 UNITS=${UNITS:-K}
 
@@ -112,10 +113,10 @@ declare -A PARTITION2
 parse "${PART1}" PARTITION1
 parse "${PART2}" PARTITION2
 
-ROOTSIZE_BYTES=$(( ${PARTITION2[size]} ))
+ROOTSIZE_BYTES=$(( 512 * ${PARTITION2[size]} ))
 
-BOOTSIZE=$(( ${PARTITION1[size]} / ${FACTOR} ))
-ROOTSIZE=$(( ${PARTITION2[size]} / ${FACTOR} ))
+BOOTSIZE=$(( 512 * ${PARTITION1[size]} / ${FACTOR} ))
+ROOTSIZE=$(( 512 * ${PARTITION2[size]} / ${FACTOR} ))
 
 case "${SUBCMD}" in
     SHOW)
