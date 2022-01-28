@@ -26,6 +26,15 @@ case "${SUBCMD}" in
         ;;
 esac
 
+MAYBE_UNITS="${AMT: -1}"
+case "${MAYBE_UNITS^^}" in
+    B|K|M|G)
+        UNITS="${MAYBE_UNITS^^}"
+        AMT="${AMT:0:-1}"
+        ;;
+esac
+
+
 UNITS=${UNITS:-K}
 
 case "${UNITS}" in
@@ -145,5 +154,4 @@ unit: sectors
 /data/img2 : start=${PARTITION2[start]}, size=${NEWSIZE}, type=${PARTITION2[type]}
 "
 
-
-do_unmount_all
+do_unmount "${PI_ROOT}"
