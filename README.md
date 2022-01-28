@@ -227,6 +227,7 @@ i.e. a Raspberry Pi boot image would look like this:
 (The partitions have the labels "boot" and "rootfs").
 
 The `partition-size` command would need to be modified to specifically look for the
-last partition as the one to resize, or be modified to use `dd` to actually move later partitionsto make room before resizing the filesystem.
+last partition as the one to resize, or be modified to use `dd` to actually move later partitions
+to make room before resizing the filesystem.
 
 As there are other partition layouts in use (e.g. NOOBS), this may be worth the effort.
