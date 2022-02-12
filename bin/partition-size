@@ -34,8 +34,6 @@ case "${MAYBE_UNITS^^}" in
         ;;
 esac
 
-df
-
 UNITS=${UNITS:-K}
 
 case "${UNITS}" in
@@ -56,56 +54,38 @@ case "${UNITS}" in
         ;;
 esac
 
-PARTITIONS="/tmp/$$.tmp"
-
-cleanup() {
-    rm -rf "${PARTITIONS}"
-}
-
-trap cleanup EXIT
-
-fdisk /data/img >/dev/null <<EOF
-O
-${PARTITIONS}
-EOF
+declare -a LABELS
 
 {
-    while read L; do
+    LABEL_DATA="$(cat <(sfdisk --dump "${PI_LOOPDEV}"))"
+    while read L <${LABEL_DATA}; do
         case "${L}" in
             'label-id: '*)
                 LABELID="${L#label-id: }"
                 ;;
-            /data/img1*)
-                PART1="${L#/data/img1 : }"
-                ;;
-            /data/img2*)
-                PART2="${L#/data/img2 : }"
+            "${PI_LOOPDEV}"*)
+                LABELS+=("${L#"${PI_LOOPDEV}* : "}")
                 ;;
             esac
     done
-}<"${PARTITIONS}"
+}
+
+PART1=${LABELS[0]}
+PART2=${LABELS[1]}
 
 parse() {
     local l=$1
     local -n outvar=$2
-    local -A out
     local IFS=','
     local -a sections=($l)
     local IFS='='
-    local -a k0=(${sections[0]})
-    local -a k1=(${sections[1]})
-    local -a k2=(${sections[2]})
-    # Extract the fields as keys, discading space characters.
-    out=(
-        [${k0[0]// }]="${k0[1]// }"
-        [${k1[0]// }]="${k1[1]// }"
-        [${k2[0]// }]="${k2[1]// }"
-    )
-    outvar=(
-        [${k0[0]// }]="${k0[1]// }"
-        [${k1[0]// }]="${k1[1]// }"
-        [${k2[0]// }]="${k2[1]// }"
-    )
+    for s in "${sections[@]}"; do
+        local s_no_ws="${s// }"
+        local tag="${s_no_ws/:*}"
+        local params="${s_no_ws/*:}"
+        local k=( $params )
+        eval ${!outvar}[${k[0]}]="${k[1]}"
+    done
 }
 
 declare -A PARTITION1
@@ -118,11 +98,17 @@ ROOTSIZE_BYTES=$(( 512 * ${PARTITION2[size]} ))
 BOOTSIZE=$(( 512 * ${PARTITION1[size]} / ${FACTOR} ))
 ROOTSIZE=$(( 512 * ${PARTITION2[size]} / ${FACTOR} ))
 
+DISKSIZE=$(( ${PARTITION2[start]} * 512 + ${PARTITION2[size]} * 512 ))
+FILESIZE="$(stat --printf=%s "${PI_IMAGE_FILE}")"
+FILEBLKS=$(( FILESIZE / 512 ))
+
 case "${SUBCMD}" in
     SHOW)
         echo "LABEL=${LABELID}"
         echo "BOOT=${BOOTSIZE} ${UNITS}"
         echo "ROOT=${ROOTSIZE} ${UNITS}"
+        echo "Total Allocated=$(( DISKSIZE / FACTOR )) ${UNITS}"
+        echo "Size of image=$(( FILESIZE / FACTOR)) ${UNITS}"
         case "${UNITS}" in
             K|M|G)
                 echo "  (Sizes rounded down to the nearest whole ${UNITS})"
@@ -141,18 +127,64 @@ case "${SUBCMD}" in
         ;;
 esac
 
+NEWDISKSIZE=$(( ${PARTITION2[start]} + NEWSIZE ))
+msg NEWSIZE="${NEWSIZE}" bytes, $(( NEWSIZE / 512 )) sectors
+msg DISKSIZE="${DISKSIZE}" bytes, $(( DISKSIZE / 512 )) sectors
+msg NEWDISKSIZE="${NEWDISKSIZE}" bytes, $(( NEWDISKSIZE / 512 )) sectors
+msg FILESIZE="${FILESIZE}" bytes, $(( FILESIZE / 512 )) sectors
+GROWTH=$(( DISKSIZE - FILESIZE ))
+msg GROWTH="${GROWTH}" bytes, $(( GROWTH / 512 )) sectors
+
+dd if=/dev/zero of="${PI_IMAGE_FILE}" bs=512 count=$(( GROWTH / 512 )) oflag=append conv=notrunc,nocreat seek=${FILEBLKS}
+
 echo "LABEL=${LABELID}"
 echo "BOOT=${BOOTSIZE}${UNITS}"
 echo "ROOT=${ROOTSIZE}${UNITS} (old)"
 echo "ROOT=$(( ${NEWSIZE} / ${FACTOR} ))${UNITS} (new)"
 
+PARTBASE="/dev/$(basename "${PI_LOOPDEV}")p"
 NEWPART="label: dos
 label-id: ${LABELID}
-device: /data/img
+device: ${PI_LOOPDEV}
 unit: sectors
 
-/data/img1 : start=${PARTITION1[start]}, size=${PARTITION1[size]}, type=${PARTITION1[type]}
-/data/img2 : start=${PARTITION2[start]}, size=${NEWSIZE}, type=${PARTITION2[type]}
+${PARTBASE}1 : start=${PARTITION1[start]}, size=${PARTITION1[size]}, type=${PARTITION1[type]}
+${PARTBASE}2 : start=${PARTITION2[start]}, size=$(( ${NEWSIZE} / 512 )), type=${PARTITION2[type]}
 "
+echo NEWPART="${NEWPART}" 1>&2
 
+
+do_unmount "${PI_BOOT}"
 do_unmount "${PI_ROOT}"
+## Sanity check before we modify
+e2fsck -n -f "${PI_ROOTDEV}"
+
+umount "${PI_ROOTDEV}"
+sync
+
+sleep 5
+
+echo "${NEWPART}"
+
+echo "${NEWPART}" | sfdisk "${PI_LOOPDEV}"
+
+echo  Syncing....
+sync
+
+sleep 5
+
+partprobe -s "${PI_LOOPDEV}"
+partprobe "${PI_LOOPDEV}"
+
+sleep 5
+#do_delete_loop
+#find_partitions
+do_mount_all
+## Sanity check after we modify
+e2fsck -n -f "${PI_ROOTDEV}"
+
+resize2fs -fp "${PI_ROOTDEV}" $(( NEWSIZE / 512 ))s
+sync
+
+## Sanity check after we modify
+e2fsck -n -f "${PI_ROOTDEV}"
