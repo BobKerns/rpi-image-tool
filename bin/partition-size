@@ -2,7 +2,11 @@
 
 #### Set the partition size of the Linux partition (the second partition)
 ####   Usage: ${PI_INVOKER} add|set <size> [B|K|M|G]
+####      Add or set the root partition size
 ####   Usage: ${PI_INVOKER} show [B|K|M|G]
+####      Show the partition allocations
+####   Usage: ${PI_INVOKER} fsck
+####      Verify the paritions
 #### The defauilt units is K (1024 bytes).
 
 . "${PI_INCLUDES}/vars.sh"
@@ -17,6 +21,8 @@ case "${SUBCMD}" in
         ;;
     SHOW)
         UNITS="${2^^}"
+        ;;
+    FSCK)
         ;;
     --help|'-?'|HELP)
         usage
@@ -43,6 +49,10 @@ case "${UNITS}" in
     K)
         FACTOR=$(( 1024 ))
         ;;
+    4|4K)
+        FACTOR=$(( 4096 ))
+        UNITS="4K Blocks"
+        ;;
     M)
         FACTOR=$(( 1024*1024 ))
         ;;
@@ -58,16 +68,18 @@ declare -a LABELS
 
 {
     LABEL_DATA="$(cat <(sfdisk --dump "${PI_LOOPDEV}"))"
-    while read L <${LABEL_DATA}; do
-        case "${L}" in
-            'label-id: '*)
-                LABELID="${L#label-id: }"
-                ;;
-            "${PI_LOOPDEV}"*)
-                LABELS+=("${L#"${PI_LOOPDEV}* : "}")
-                ;;
-            esac
-    done
+    {
+        while read L; do
+            case "${L}" in
+                'label-id: '*)
+                    LABELID="${L#label-id: }"
+                    ;;
+                "${PI_LOOPDEV}"*)
+                    LABELS+=("${L#"${PI_LOOPDEV}* : "}")
+                    ;;
+                esac
+        done
+    }  < <(echo "${LABEL_DATA}")
 }
 
 PART1=${LABELS[0]}
@@ -122,6 +134,10 @@ case "${SUBCMD}" in
     ADD)
         NEWSIZE=$(( ${ROOTSIZE_BYTES} + ${AMT} * ${FACTOR} ))
         ;;
+    FSCK)
+        e2fsck -n -f "${PI_ROOTDEV}"
+        exit 0
+        ;;
     *)
         usage
         ;;
@@ -132,11 +148,15 @@ msg NEWSIZE="${NEWSIZE}" bytes, $(( NEWSIZE / 512 )) sectors
 msg DISKSIZE="${DISKSIZE}" bytes, $(( DISKSIZE / 512 )) sectors
 msg NEWDISKSIZE="${NEWDISKSIZE}" bytes, $(( NEWDISKSIZE / 512 )) sectors
 msg FILESIZE="${FILESIZE}" bytes, $(( FILESIZE / 512 )) sectors
-GROWTH=$(( DISKSIZE - FILESIZE ))
+GROWTH=$(( NEWDISKSIZE - FILESIZE ))
 msg GROWTH="${GROWTH}" bytes, $(( GROWTH / 512 )) sectors
+
+cp "${PI_IMAGE_FILE}" /data/foo
+PI_IMAGE_FILE=/data/foo
 
 dd if=/dev/zero of="${PI_IMAGE_FILE}" bs=512 count=$(( GROWTH / 512 )) oflag=append conv=notrunc,nocreat seek=${FILEBLKS}
 
+echo nsize=$(( $(stat --printf=%s "${PI_IMAGE_FILE}") / 512 ))
 echo "LABEL=${LABELID}"
 echo "BOOT=${BOOTSIZE}${UNITS}"
 echo "ROOT=${ROOTSIZE}${UNITS} (old)"
@@ -149,32 +169,38 @@ device: ${PI_LOOPDEV}
 unit: sectors
 
 ${PARTBASE}1 : start=${PARTITION1[start]}, size=${PARTITION1[size]}, type=${PARTITION1[type]}
-${PARTBASE}2 : start=${PARTITION2[start]}, size=$(( ${NEWSIZE} / 512 )), type=${PARTITION2[type]}
-"
+${PARTBASE}2 : start=${PARTITION2[start]}, size=$(( ${NEWSIZE} / 512 )), type=${PARTITION2[type]}"
 echo NEWPART="${NEWPART}" 1>&2
-
 
 do_unmount "${PI_BOOT}"
 do_unmount "${PI_ROOT}"
 ## Sanity check before we modify
 e2fsck -n -f "${PI_ROOTDEV}"
 
-umount "${PI_ROOTDEV}"
-sync
-
-sleep 5
-
+echo "Updating to:"
 echo "${NEWPART}"
 
 echo "${NEWPART}" | sfdisk "${PI_LOOPDEV}"
 
+echo New size should be $(( NEWSIZE / 4096 )) 4K blocks
 echo  Syncing....
 sync
 
 sleep 5
 
-partprobe -s "${PI_LOOPDEV}"
-partprobe "${PI_LOOPDEV}"
+#partprobe -s "${PI_LOOPDEV}"
+#partprobe "${PI_LOOPDEV}"
+
+
+find_partitions
+
+sfdisk --dump "${PI_LOOPDEV}"
+
+losetup --list
+
+echo "${PI_LOOPDEV}"=$(( $(stat --printf=%s "${PI_IMAGE_FILE}") / 512 ))
+echo "${PI_BOOTDEV}"=$(( $(stat --printf=%s "${PI_BOOTDEV}") / 512 ))
+echo "${PI_ROOTDEV}"=$(( $(stat --printf=%s "${PI_ROOTDEV}") / 512 ))
 
 sleep 5
 #do_delete_loop
