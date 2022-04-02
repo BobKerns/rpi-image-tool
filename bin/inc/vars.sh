@@ -189,6 +189,31 @@ copyUntilInternal() {
     done
 }
 
+# Format disk space numbers in a human-friendly way.
+dspace() {
+    local val="$1"
+    local unit
+    local factor=1
+    if (( val >= 1024*1024*1024 )); then
+        factor=$(( 1024*1024*1024 ))
+        unit=G
+    elif (( val >= 1024*1024 )); then
+        factor=$(( 1024*1024 ))
+        unit=M
+    elif (( val >= 1024 )); then
+        factor=$(( 1024 ))
+        unit=K
+    else
+        factor=$(( 1 ))
+        unit=B
+    fi
+    local fmtv="$( bc <<< "scale=3; ${val}/${factor}" )"
+    local fmtv1="${fmtv%0}"
+    local fmtv2="${fmtv1%0}"
+    local fmtd="${fmtv2%.0}${unit}"
+    echo "${fmtd}"
+}
+
 # Copy everything prior to a specified line.
 # This is used to allow scripts to append data,
 # but if the script is run again, the data is replaced,

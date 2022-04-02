@@ -2,7 +2,11 @@
 
 #### Set the partition size of the Linux partition (the second partition)
 ####   Usage: ${PI_INVOKER} add|set <size> [B|K|M|G]
-####      Add or set the root partition size
+####      Add or set the root partition size. This must be followed by
+####      ${PI_INVOKER expandfs to resize the filesystem.
+####      This tool will not shrink filesystems.
+####   Usage: ${PI_INVOKER} expandfs [B|K|M|G]
+###@      Expand the root filesystem to match the partition size.
 ####   Usage: ${PI_INVOKER} show [B|K|M|G]
 ####      Show the partition allocations
 #### The defauilt units is K (1024 bytes).
@@ -21,6 +25,8 @@ case "${SUBCMD}" in
     SHOW)
         UNITS="${2^^}"
         ;;
+    EXPANDFS)
+        ;;
     --help|'-?'|HELP)
         usage
         ;;
@@ -31,24 +37,29 @@ esac
 
 MAYBE_UNITS="${AMT: -1}"
 case "${MAYBE_UNITS^^}" in
-    B|K|M|G)
+    B|K|M|G|S)
         UNITS="${MAYBE_UNITS^^}"
         AMT="${AMT:0:-1}"
         ;;
 esac
 
 UNITS=${UNITS:-K}
+DUNITS=${UNITS}
 
 case "${UNITS}" in
     B)
         FACTOR=$(( 1 ))
+        ;;
+    S)
+        FACTOR=$(( 512 ))
         ;;
     K)
         FACTOR=$(( 1024 ))
         ;;
     4|4K)
         FACTOR=$(( 4096 ))
-        UNITS="4K Blocks"
+        UNITS=4K
+        DUNITS=" 4K Blocks"
         ;;
     M)
         FACTOR=$(( 1024*1024 ))
@@ -102,41 +113,63 @@ declare -A PARTITION2
 parse "${PART1}" PARTITION1
 parse "${PART2}" PARTITION2
 
+BOOTSIZE_BYTES=$(( 512 * ${PARTITION1[size]} ))
 ROOTSIZE_BYTES=$(( 512 * ${PARTITION2[size]} ))
 
-BOOTSIZE=$(( 512 * ${PARTITION1[size]} / ${FACTOR} ))
-ROOTSIZE=$(( 512 * ${PARTITION2[size]} / ${FACTOR} ))
+BOOTSIZE=$(( BOOTSIZE_BYTES / FACTOR ))
+ROOTSIZE=$(( ROOTSIZE_BYTES / FACTOR ))
+NEWSIZE=$(( ROOTSIZE_BYTES ))
 
 DISKSIZE=$(( ${PARTITION2[start]} * 512 + ${PARTITION2[size]} * 512 ))
 FILESIZE="$(stat --printf=%s "${PI_IMAGE_FILE}")"
 FILEBLKS=$(( FILESIZE / 512 ))
 
+expandfs() {
+    # Sanity check before we modify
+    do_fsck
+
+    # Resize the filesystem
+    resize2fs -fp "$1"
+
+    ## Sanity check after we modify
+    do_fsck
+}
+
+show_status() {
+    msg "LABEL=${LABELID}"
+    msg "BOOT=$(dspace $(( BOOTSIZE_BYTES )) )"
+    msg "ROOT=$(dspace $(( ROOTSIZE_BYTES )) ) (old)"
+    msg "ROOT=$(dspace $(( NEWSIZE )) ) (new)"
+    msg "Size of image=$(dspace $(( FILESIZE )) )"
+}
+
 case "${SUBCMD}" in
     SHOW)
         echo "LABEL=${LABELID}"
-        echo "BOOT=${BOOTSIZE} ${UNITS}"
-        echo "ROOT=${ROOTSIZE} ${UNITS}"
-        echo "Total Allocated=$(( DISKSIZE / FACTOR )) ${UNITS}"
-        echo "Size of image=$(( FILESIZE / FACTOR)) ${UNITS}"
-        case "${UNITS}" in
-            K|M|G)
-                echo "  (Sizes rounded down to the nearest whole ${UNITS})"
-                ;;
-        esac
+        echo "BOOT=$(dspace $(( BOOTSIZE_BYTES )) )"
+        echo "ROOT=$(dspace $(( ROOTSIZE_BYTES )) )"
+        echo "Total Allocated=$(dspace $(( DISKSIZE )) )"
+        echo "Size of image=$(dspace $(( FILESIZE )) )"
         exit 0
         ;;
     SET)
-        NEWSIZE=$(( ${AMT} * ${FACTOR} ))
+        NEWSIZE=$(( AMT * FACTOR ))
         ;;
     ADD)
-        NEWSIZE=$(( ${ROOTSIZE_BYTES} + ${AMT} * ${FACTOR} ))
+        NEWSIZE=$(( ROOTSIZE_BYTES + ( AMT * FACTOR ) ))
+        ;;
+    EXPANDFS)
+        NEWSIZE=$(( ROOTSIZE_BYTES ))
+        expandfs "${PI_ROOTDEV}"
+        show_status
+        exit
         ;;
     *)
         usage
         ;;
 esac
 
-NEWDISKSIZE=$(( ${PARTITION2[start]} + NEWSIZE ))
+NEWDISKSIZE=$(( ${PARTITION2[start]} * 512 + NEWSIZE ))
 verbose NEWSIZE="${NEWSIZE}" bytes, $(( NEWSIZE / 512 )) sectors
 verbose DISKSIZE="${DISKSIZE}" bytes, $(( DISKSIZE / 512 )) sectors
 verbose NEWDISKSIZE="${NEWDISKSIZE}" bytes, $(( NEWDISKSIZE / 512 )) sectors
@@ -144,11 +177,14 @@ verbose FILESIZE="${FILESIZE}" bytes, $(( FILESIZE / 512 )) sectors
 GROWTH=$(( NEWDISKSIZE - FILESIZE ))
 verbose GROWTH="${GROWTH}" bytes, $(( GROWTH / 512 )) sectors
 
-dd if=/dev/zero of="${PI_IMAGE_FILE}" bs=512 count=$(( GROWTH / 512 )) oflag=append conv=notrunc,nocreat seek=${FILEBLKS}
+if (( GROWTH >= 0 )); then
+    dd if=/dev/zero of="${PI_IMAGE_FILE}" bs=512 count=$(( GROWTH / 512 )) oflag=append conv=notrunc,nocreat seek=${FILEBLKS}
+fi
 
 # Close and reacquire the partitions.
 do_delete_loop
 find_partitions
+partprobe "${PI_LOOPDEV}"
 
 debug nsize=$(( $(stat --printf=%s "${PI_IMAGE_FILE}") / 512 ))
 
@@ -161,24 +197,16 @@ unit: sectors
 ${PARTBASE}1 : start=${PARTITION1[start]}, size=${PARTITION1[size]}, type=${PARTITION1[type]}
 ${PARTBASE}2 : start=${PARTITION2[start]}, size=$(( ${NEWSIZE} / 512 )), type=${PARTITION2[type]}"
 
-
-
+# Optionally display the new partition table.
 debug NEWPART="${NEWPART}"
 
+# Install the new partition table
 echo "${NEWPART}" | sfdisk "${PI_LOOPDEV}"
 
 debug New size should be $(( NEWSIZE / 4096 )) 4K blocks
 
-# Sanity check before we modify
-do_fsck
-
-# Resize the filesystem
-resize2fs -fp "${PI_ROOTDEV}"
-
-## Sanity check after we modify
-do_fsck
-
-msg "LABEL=${LABELID}"
-msg "BOOT=${BOOTSIZE}${UNITS}"
-msg "ROOT=${ROOTSIZE}${UNITS} (old)"
-msg "ROOT=$(( ${NEWSIZE} / ${FACTOR} ))${UNITS} (new)"
+msg
+show_status
+msg
+msg "The partition has been expanded, but not the filesystem."
+msg "Now run ${PI_INVOKER} partition-size expandfs"
