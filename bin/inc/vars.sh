@@ -85,6 +85,7 @@ do_delete_loop() {
         unset PI_BOOTDEV
         unset PI_ROOTDEV
     fi
+    losetup -D
     mapfile -t LOOP < <(losetup --list | grep '1  0 /image ' |  cut -d' ' -f1)
     for loop in "${LOOP[@]}"; do
         kpartx -d "${loop}"
@@ -119,6 +120,7 @@ check_image() {
 # for the whole disk and its root and boot partitions.
 find_partitions() {
     check_image
+    trap "do_unmount_all" EXIT
     mapfile -t PARTS < <(kpartx -avs "${PI_IMAGE_FILE:?}" | cut -d' ' -f3)
     export PI_BOOTDEV="/dev/mapper/${PARTS[0]}"
     export PI_ROOTDEV="/dev/mapper/${PARTS[1]}"
@@ -148,7 +150,6 @@ do_mount_all() {
     mkdir -p "${PI_TMP:?}" 2>/dev/null
     verbose "Mounting partitions from ${PI_IMAGE_FILE:?}"
     find_partitions
-    trap "do_unmount_all" EXIT
     do_mount "${PI_ROOTDEV:?}" "${PI_ROOT:?}"
     do_mount "${PI_BOOTDEV:?}" "${PI_BOOT:?}"
 }
