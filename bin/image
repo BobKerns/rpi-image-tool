@@ -1,26 +1,41 @@
 #!/bin/bash
 
 #### Load an image file to be configured.
-#### Usage ${PI_INVOKER} $(basename "$0") <imagefile>
-
+#### Usage:
+####   ${PI_INVOKER} $(basename "$0") <imagefile>
+####      Load the <imagefile> into the work volume
+####   ${PI_INVOKER} $(basename "$0") --clean
+####       Clear the work volume.
+####       This deletes all the files in the work volume. If you specify the work volume
+####       manually, be certain you specify the correct one.
 
 . "${PI_CMDS}/inc/vars.sh"
+
+CLEAN=
 
 case "$1" in
     ''|--help)
         usage
         exit
         ;;
+    --clean|--clean)
+        CLEAN=yes
+        ;;
     *)
         shift
         ;;
 esac
 
-if [ ! -r "${PI_IMAGE_SRC_MOUNT}" ]; then
-    msg "No image file supplied."
-    usage
-fi
-msg Copying "${PI_IMAGE_SRC_MOUNT}" to "${PI_IMAGE_FILE}"
 
-cp -fv "${PI_IMAGE_SRC_MOUNT}" "${PI_IMAGE_FILE}"
-chmod a+w "${PI_IMAGE_FILE}"
+if [ ! -z "${CLEAN}" ]; then
+    rm -rf /work/*
+else
+    if [ ! -r "${PI_IMAGE_SRC_MOUNT}" ]; then
+        msg "No image file supplied."
+        usage
+    fi
+    msg Copying "${PI_IMAGE_SRC_MOUNT}" to "${PI_IMAGE_FILE}"
+
+    cp -fv "${PI_IMAGE_SRC_MOUNT}" "${PI_IMAGE_FILE}"
+    chmod a+w "${PI_IMAGE_FILE}"
+fi
