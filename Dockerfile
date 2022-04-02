@@ -37,10 +37,12 @@ WORKDIR /data/local
 # The main list of packages to be installed.
 
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
-    apt-get -y install git kpartx kmod multipath-tools parted errno
+    apt-get -y install git kpartx kmod multipath-tools parted errno dosfstools
 
 # Our script data is the most likely to change, and quick to load.
 COPY bin/ /data/bin/
+
+VOLUME [ "/image" ]
 
 # This is the script that runs when we invoke the container. It sets up the context
 # (mounts, environment variables) for the subcommand scripts, and runs them.

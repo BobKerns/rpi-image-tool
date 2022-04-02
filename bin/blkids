@@ -5,6 +5,8 @@
 
 . "${PI_CMDS}/inc/vars.sh"
 
+do_mount_all
+
 blkid "${PI_LOOPDEV}"
 blkid "${PI_BOOTDEV}"
 blkid "${PI_ROOTDEV}"

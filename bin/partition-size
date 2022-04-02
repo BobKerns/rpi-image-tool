@@ -5,12 +5,11 @@
 ####      Add or set the root partition size
 ####   Usage: ${PI_INVOKER} show [B|K|M|G]
 ####      Show the partition allocations
-####   Usage: ${PI_INVOKER} fsck
-####      Verify the paritions
 #### The defauilt units is K (1024 bytes).
 
 . "${PI_INCLUDES}/vars.sh"
 
+find_partitions
 
 SUBCMD="${1^^}"
 
@@ -21,8 +20,6 @@ case "${SUBCMD}" in
         ;;
     SHOW)
         UNITS="${2^^}"
-        ;;
-    FSCK)
         ;;
     --help|'-?'|HELP)
         usage
@@ -134,10 +131,6 @@ case "${SUBCMD}" in
     ADD)
         NEWSIZE=$(( ${ROOTSIZE_BYTES} + ${AMT} * ${FACTOR} ))
         ;;
-    FSCK)
-        e2fsck -n -f "${PI_ROOTDEV}"
-        exit 0
-        ;;
     *)
         usage
         ;;
@@ -151,10 +144,9 @@ msg FILESIZE="${FILESIZE}" bytes, $(( FILESIZE / 512 )) sectors
 GROWTH=$(( NEWDISKSIZE - FILESIZE ))
 msg GROWTH="${GROWTH}" bytes, $(( GROWTH / 512 )) sectors
 
-cp "${PI_IMAGE_FILE}" /data/foo
-PI_IMAGE_FILE=/data/foo
-
+ls -l "${PI_IMAGE_FILE}"
 dd if=/dev/zero of="${PI_IMAGE_FILE}" bs=512 count=$(( GROWTH / 512 )) oflag=append conv=notrunc,nocreat seek=${FILEBLKS}
+ls -l "${PI_IMAGE_FILE}"
 
 echo nsize=$(( $(stat --printf=%s "${PI_IMAGE_FILE}") / 512 ))
 echo "LABEL=${LABELID}"
@@ -172,8 +164,8 @@ ${PARTBASE}1 : start=${PARTITION1[start]}, size=${PARTITION1[size]}, type=${PART
 ${PARTBASE}2 : start=${PARTITION2[start]}, size=$(( ${NEWSIZE} / 512 )), type=${PARTITION2[type]}"
 echo NEWPART="${NEWPART}" 1>&2
 
-do_unmount "${PI_BOOT}"
-do_unmount "${PI_ROOT}"
+partprobe -s "${PI_LOOPDEV}"
+
 ## Sanity check before we modify
 e2fsck -n -f "${PI_ROOTDEV}"
 
@@ -188,8 +180,8 @@ sync
 
 sleep 5
 
-#partprobe -s "${PI_LOOPDEV}"
-#partprobe "${PI_LOOPDEV}"
+partprobe -s "${PI_LOOPDEV}"
+partprobe "${PI_LOOPDEV}"
 
 
 find_partitions
@@ -198,19 +190,20 @@ sfdisk --dump "${PI_LOOPDEV}"
 
 losetup --list
 
-echo "${PI_LOOPDEV}"=$(( $(stat --printf=%s "${PI_IMAGE_FILE}") / 512 ))
-echo "${PI_BOOTDEV}"=$(( $(stat --printf=%s "${PI_BOOTDEV}") / 512 ))
-echo "${PI_ROOTDEV}"=$(( $(stat --printf=%s "${PI_ROOTDEV}") / 512 ))
+echo PI_LOOPDEV="${PI_LOOPDEV}"=$(( $(stat --printf=%s "${PI_IMAGE_FILE}") / 512 ))
+echo PI_BOOTDEV="${PI_BOOTDEV}"=$(( $(stat --printf=%s "${PI_BOOTDEV}") / 512 ))
+echo PI_ROOTDEV="${PI_ROOTDEV}"=$(( $(stat --printf=%s "${PI_ROOTDEV}") / 512 ))
 
 sleep 5
+
 #do_delete_loop
 #find_partitions
-do_mount_all
-## Sanity check after we modify
-e2fsck -n -f "${PI_ROOTDEV}"
+#do_mount_all
+## Sanity check before we modify
+do_fsck
 
-resize2fs -fp "${PI_ROOTDEV}" $(( NEWSIZE / 512 ))s
+resize2fs -fp "${PI_ROOTDEV}"
 sync
 
 ## Sanity check after we modify
-e2fsck -n -f "${PI_ROOTDEV}"
+do_fsck

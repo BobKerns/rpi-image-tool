@@ -5,6 +5,8 @@
 
 . "${PI_CMDS}/inc/vars.sh"
 
+find_partitions
+
 EXCLUDE=(
     "dev/*"
     "proc/*"

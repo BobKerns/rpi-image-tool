@@ -29,33 +29,10 @@ case "$1" in
         ;;
 esac
 
-export PI_IMAGE_FILE="$1"
-shift
-
-if [ "$PI_IMAGE_FILE" = "bash" ]; then
-    # Allow running bash w/o an image, to explore the container
-    exec bash "$@"
-elif [ -z "$PI_IMAGE_FILE" ]; then
-    usage
-fi
-
 # Harmonize relative paths
 cd /data/local
 if [ -z "$*" ]; then
     usage
-fi
-
-if [ -r "/data/img" ]; then
-    export PI_IMAGE_FILE="/data/img"
-    do_mount_all
-elif [ "${PI_IMAGE_FILE}" = '-' ]; then
-    export PI_IMAGE_FILE=
-elif [ -r "$PI_IMAGE_FILE" ]; then
-    export PI_IMAGE_FILE="${PI_IMAGE_FILE}"
-    do_mount_all
-else
-    msg "Cannot find image file ${PI_IMAGE_FILE}"
-    exit 2
 fi
 
 # Allow these to be regular commands

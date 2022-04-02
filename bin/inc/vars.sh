@@ -15,6 +15,10 @@ export PI_SAVED="${PI_SAVED:-"${PI_WORKDIR}/saved"}"
 export PI_ROOT="${PI_ROOT:-"${PI_BUILD}/root"}"
 export PI_BOOT="${PI_BOOT:-"${PI_ROOT}/boot"}"
 
+export PI_IMAGE_FILE=/work/image
+# Should be the same as in rpi-image-tool
+export PI_IMAGE_SRC_MOUNT=/data/image
+
 SELF=$$
 
 export PI_VERBOSE="${PI_VERBOSE}"
@@ -76,6 +80,10 @@ do_delete_loop() {
         unset PI_BOOTDEV
         unset PI_ROOTDEV
     fi
+    mapfile -t LOOP < <(losetup --list | grep '1  0 /image ' |  cut -d' ' -f1)
+    for loop in "${LOOP[@]}"; do
+        kpartx -d "${loop}"
+    done
 }
 
 # Delete our temporary files
@@ -95,9 +103,18 @@ do_unmount_all() {
     do_delete_loop
 }
 
+# Verify that the image has been loaded.
+check_image() {
+    if [ ! -w "${PI_IMAGE_FILE}" ]; then
+        errmsg "No image file has been provided. Run the image <imagefile> subcommand."
+        exit 0
+    fi
+}
+
 # Set PI_LOOPDEV, PI_ROOTDEV, and PI_BOOTDEV to the raw devices
 # for the whole disk and its root and boot partitions.
 find_partitions() {
+    check_image
     mapfile -t PARTS < <(kpartx -avs "${PI_IMAGE_FILE:?}" | cut -d' ' -f3)
     export PI_BOOTDEV="/dev/mapper/${PARTS[0]}"
     export PI_ROOTDEV="/dev/mapper/${PARTS[1]}"
@@ -130,6 +147,14 @@ do_mount_all() {
     trap "do_unmount_all" EXIT
     do_mount "${PI_ROOTDEV:?}" "${PI_ROOT:?}"
     do_mount "${PI_BOOTDEV:?}" "${PI_BOOT:?}"
+}
+
+do_fsck() {
+    msg "Checking root ${PI_ROOTDEV}"
+    e2fsck -n -f "${PI_ROOTDEV}"
+
+    msg "Checking /boot ${PI_BOOTDEV}"
+    dosfsck -wvyV "${PI_BOOTDEV}"
 }
 
 # mkktmp dir

@@ -1,0 +1,22 @@
+#!/bin/bash
+
+#### Load an image file to be configured.
+#### Usage ${PI_INVOKER} $(basename "$0") <imagefile>
+
+
+. "${PI_CMDS}/inc/vars.sh"
+
+case "$1" in
+    ''|--help)
+        usage
+        exit
+        ;;
+    *)
+        shift
+        ;;
+esac
+
+msg Copying "${PI_IMAGE_SRC_MOUNT}" to "${PI_IMAGE_FILE}"
+
+cp -fv "${PI_IMAGE_SRC_MOUNT}" "${PI_IMAGE_FILE}"
+chmod a+w "${PI_IMAGE_FILE}"

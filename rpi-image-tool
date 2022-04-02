@@ -14,15 +14,17 @@ abspath() {
 
 export PI_BUILDER=${PI_BUILDER:-rpiimagetool}
 
+export PI_VOLUME=rpi-image-tool
+
 export PI_INVOKER_BASE="$(basename "$0")"
-export PI_INVOKER="${PI_INVOKER_BASE} [--verbose|--debug] [--interactive] [--builder imagename] <.img file>"
+export PI_INVOKER="${PI_INVOKER_BASE} [--verbose|--debug] [--interactive] [--builder scriptname] [--volume volname]"
+# Should be the same as in vars.sh
+export PI_IMAGE_SRC_MOUNT=/data/image
 
 # Parse any supplied options.
-PI_IMAGE_FILE=
-PI_IMAGE_FILE_DFLT=
 declare -a options=()
 INTERACTIVE="-i"
-while [ -z "${PI_IMAGE_FILE}" -a ! -z "$*" ]; do
+while [ -z "${SUBCMD}" -a ! -z "$*" ]; do
     case "$1" in
         --interactive|-i)
             INTERACTIVE="-it"
@@ -44,39 +46,33 @@ while [ -z "${PI_IMAGE_FILE}" -a ! -z "$*" ]; do
             export PI_BUILDER="$1"
             shift
             ;;
+        --volume)
+            shift
+            export PI_VOLUME="$1"
+            shift
+            ;;
         --help|'-?')
             shift
             options+=(--help)
-            PI_IMAGE_FILE_DFLT='-'
             export PI_INVOKER="$(basename "$0")"
+            SUBCMD=help
             ;;
         help)
-            PI_IMAGE_FILE='-'
             export PI_INVOKER="$(basename "$0")"
+            SUBCMD=help
+            ;;
+        image)
+            PI_IMAGE_ARG="$2"
+            SUBCMD=image
             ;;
         *)
-            PI_IMAGE_FILE="$1"
-            shift
+            SUBCMD="$1"
             ;;
         esac
 done
 
-# Special case known interactive programs with or without an image file.. In these cases, we want a PTY allocated
+# Special case known interactive programs. In these cases, we want a PTY allocated
 
-case "${PI_IMAGE_FILE}" in
-    # Instead of image file
-    bash)
-        if [ -z "$*" ]; then
-            ## Only if no arguments (e.g. scripts)
-            export PI_INTERACTIVE=yes
-        fi
-        ;;
-    emacs|vi|nano)
-        export PI_INTERACTIVE=yes
-        ;;
-esac
-
-# In addition to image file
 case "$1" in
     bash)
         if [ "$*" = 'bash' ]; then
@@ -87,13 +83,16 @@ case "$1" in
     emacs|vi|nano)
         export PI_INTERACTIVE=yes
         ;;
+    '')
+        set -- bash
+        export PI_INTERACTIVE=yes
 esac
 
 if [ ! -z "${PI_INTERACTIVE}" ]; then
     INTERACTIVE='-it'
 fi
 
-export PI_USER_IMAGE_FILE="${PI_IMAGE_FILE}"
+export PI_USER_IMAGE_FILE="${PI_IMAGE_ARG}"
 export PI_USER_CWD="$(pwd)"
 export PI_USER_NAME="$(whoami)"
 
@@ -108,15 +107,16 @@ exports=(
     PI_INTERACTIVE
     PI_BUILDER
     )
-mount_args=(-v"${PWD}:/data/local")
+mount_args=(
+    -v"${PWD}:/data/local"
+    --mount "type=volume,source=${PI_VOLUME},destination=/work"
+)
 export_args=()
 
-if [ "${PI_IMAGE_FILE}" != '-' ]; then
-    if [ ! -z "${PI_IMAGE_FILE}" -a -r "${PI_IMAGE_FILE}" ]; then
-        export PI_IMAGE_USER_ABSOLUTE="$(abspath "${PI_IMAGE_FILE}")"
-        mounts+=(type=bind,source="${PI_IMAGE_USER_ABSOLUTE},target=/data/img")
-        exports+=(PI_IMAGE_USER_ABSOLUTE)
-    fi
+if [ ! -z "${PI_IMAGE_ARG}" -a -r "${PI_IMAGE_ARG}" ]; then
+    export PI_IMAGE_USER_ABSOLUTE="$(abspath "${PI_IMAGE_ARG}")"
+    mounts+=(type=bind,source="${PI_IMAGE_USER_ABSOLUTE},target=${PI_IMAGE_SRC_MOUNT}")
+    exports+=(PI_IMAGE_USER_ABSOLUTE)
 fi
 
 for i in  "${mounts[@]}"; do
@@ -141,7 +141,7 @@ if [ "${INTERACTIVE}" = '-it' ]; then
         "${mount_args[@]}" \
         "${export_args[@]}" \
         --tmpfs /data/build/tmp:rw,noexec,nosuid,size=100M \
-        "${PI_BUILDER}" "${options[@]}" "${PI_IMAGE_FILE:-"${PI_IMAGE_FILE_DFLT}"}" "$@"
+        "${PI_BUILDER}" "${options[@]}" "$@"
 else
     # When not in interactive mode, run docker in the background so that bash
     # can handle SIGINT and stop the container.
@@ -151,6 +151,6 @@ else
         "${mount_args[@]}" \
         "${export_args[@]}" \
         --tmpfs /data/build/tmp:rw,noexec,nosuid,size=100M \
-        "${PI_BUILDER}" "${options[@]}" "${PI_IMAGE_FILE:-"${PI_IMAGE_FILE_DFLT}"}" "$@" &
+        "${PI_BUILDER}" "${options[@]}" "$@" &
     wait $!
 fi

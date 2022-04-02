@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#### Verify the integrity of the filesystems in the image.\
+####   Usage: ${PI_INVOKER} fsck
+####      Verify the paritions
+
+. "${PI_CMDS}/inc/vars.sh"
+
+do_delete_loop
+
+find_partitions
+
+do_fsck
