@@ -21,7 +21,7 @@ For ease of use, this is packaged behind three front-end scripts:
 
 ## rpi-image-tool
 
-> Usage: rpi-image-tool [--verbose|--debug] [--interactive] [--builder imagename] <.img file> \<cmd> \<args*>
+> Usage: rpi-image-tool \[--verbose|--debug] \[--interactive] [--volume volname] <.img file> \<cmd> \<args*>
 
 Root and boot filesystems will be mounted under `/data/build/root` and `/data/build/root/boot`
 and the supplied command will be executed.
