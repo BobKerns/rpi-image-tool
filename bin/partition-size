@@ -146,7 +146,11 @@ verbose GROWTH="${GROWTH}" bytes, $(( GROWTH / 512 )) sectors
 
 dd if=/dev/zero of="${PI_IMAGE_FILE}" bs=512 count=$(( GROWTH / 512 )) oflag=append conv=notrunc,nocreat seek=${FILEBLKS}
 
+# Close and reacquire the partitions.
+do_delete_loop
+find_partitions
 
+debug nsize=$(( $(stat --printf=%s "${PI_IMAGE_FILE}") / 512 ))
 
 PARTBASE="/dev/$(basename "${PI_LOOPDEV}")p"
 NEWPART="label: dos
@@ -157,39 +161,19 @@ unit: sectors
 ${PARTBASE}1 : start=${PARTITION1[start]}, size=${PARTITION1[size]}, type=${PARTITION1[type]}
 ${PARTBASE}2 : start=${PARTITION2[start]}, size=$(( ${NEWSIZE} / 512 )), type=${PARTITION2[type]}"
 
-partprobe -s "${PI_LOOPDEV}"
 
-## Sanity check before we modify
-e2fsck -n -f "${PI_ROOTDEV}"
 
 debug NEWPART="${NEWPART}"
 
 echo "${NEWPART}" | sfdisk "${PI_LOOPDEV}"
 
-
-sleep 5
-
-partprobe -s "${PI_LOOPDEV}"
-partprobe "${PI_LOOPDEV}"
-
-
-find_partitions
-
-sfdisk --dump "${PI_LOOPDEV}"
-
-
 debug New size should be $(( NEWSIZE / 4096 )) 4K blocks
 
-sleep 5
-
-#do_delete_loop
-#find_partitions
-#do_mount_all
-## Sanity check before we modify
+# Sanity check before we modify
 do_fsck
 
+# Resize the filesystem
 resize2fs -fp "${PI_ROOTDEV}"
-sync
 
 ## Sanity check after we modify
 do_fsck
