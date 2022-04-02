@@ -16,6 +16,10 @@ case "$1" in
         ;;
 esac
 
+if [ ! -r "${PI_IMAGE_SRC_MOUNT}" ]; then
+    msg "No image file supplied."
+    usage
+fi
 msg Copying "${PI_IMAGE_SRC_MOUNT}" to "${PI_IMAGE_FILE}"
 
 cp -fv "${PI_IMAGE_SRC_MOUNT}" "${PI_IMAGE_FILE}"
