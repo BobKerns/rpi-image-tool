@@ -17,7 +17,7 @@ export PI_BOOT="${PI_BOOT:-"${PI_ROOT}/boot"}"
 
 export PI_IMAGE_FILE=/work/image
 # Should be the same as in rpi-image-tool
-export PI_IMAGE_SRC_MOUNT=/data/image
+export PI_IMAGE_SRC_MOUNT="${PI_IMAGE_SRC_MOUNT-/data/image}"
 
 SELF=$$
 
