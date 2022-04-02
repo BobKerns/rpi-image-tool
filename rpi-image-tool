@@ -14,7 +14,7 @@ abspath() {
 
 export PI_BUILDER=${PI_BUILDER:-rpiimagetool}
 
-export PI_VOLUME=rpi-image-tool
+export PI_VOLUME=default
 
 export PI_INVOKER_BASE="$(basename "$0")"
 export PI_INVOKER="${PI_INVOKER_BASE} [--verbose|--debug] [--interactive] [--builder scriptname] [--volume volname]"
@@ -109,7 +109,7 @@ exports=(
     )
 mount_args=(
     -v"${PWD}:/data/local"
-    --mount "type=volume,source=${PI_VOLUME},destination=/work"
+    --mount "type=volume,source=pi-image-tool-vol_${PI_VOLUME},destination=/work"
 )
 export_args=()
 
