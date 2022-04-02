@@ -44,6 +44,8 @@ verbose "RUN: $@"
 status=$?
 if [ "${status}" = 127 ]; then
     msg ERROR: "$1 not found."
+elif [ "${status}" = 126 ]; then
+    :
 elif [ "${status}" != 0 ]; then
     errmsg="$(errno "${status}" || echo "${status}")"
     msg ERROR: "${errmsg}"

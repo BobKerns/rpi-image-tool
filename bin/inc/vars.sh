@@ -25,7 +25,7 @@ export PI_VERBOSE="${PI_VERBOSE}"
 export PI_VERBOSE="${PI_DEBUG}"
 
 # Show usage for the current or
- usage() {
+usage() {
      local cmd="${1:-"${CMD}"}"
      local script="$(grep -E '^#### |^####$' "${cmd}" | sed -E -e 's/^#### ?/echo "/' -e 's/$/";/')"
      if [ -z "${script}" ]; then
@@ -56,6 +56,11 @@ debug() {
     return 0
 }
 
+
+error() {
+    msg ERROR: "$@"
+    exit 126
+}
 # Unmount the specified directory
 do_unmount() {
     local dir="${1:?}"
@@ -106,8 +111,7 @@ do_unmount_all() {
 # Verify that the image has been loaded.
 check_image() {
     if [ ! -w "${PI_IMAGE_FILE}" ]; then
-        errmsg "No image file has been provided. Run the image <imagefile> subcommand."
-        exit 0
+        error "No image file has been provided. Run the image <imagefile> subcommand."
     fi
 }
 
