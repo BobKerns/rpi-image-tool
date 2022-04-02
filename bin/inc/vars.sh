@@ -155,11 +155,13 @@ do_mount_all() {
 }
 
 do_fsck() {
+    sync
     msg "Checking root ${PI_ROOTDEV}"
     e2fsck -n -f "${PI_ROOTDEV}"
 
     msg "Checking /boot ${PI_BOOTDEV}"
     dosfsck -wvyV "${PI_BOOTDEV}"
+    sync
 }
 
 # mkktmp dir
