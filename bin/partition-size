@@ -137,22 +137,16 @@ case "${SUBCMD}" in
 esac
 
 NEWDISKSIZE=$(( ${PARTITION2[start]} + NEWSIZE ))
-msg NEWSIZE="${NEWSIZE}" bytes, $(( NEWSIZE / 512 )) sectors
-msg DISKSIZE="${DISKSIZE}" bytes, $(( DISKSIZE / 512 )) sectors
-msg NEWDISKSIZE="${NEWDISKSIZE}" bytes, $(( NEWDISKSIZE / 512 )) sectors
-msg FILESIZE="${FILESIZE}" bytes, $(( FILESIZE / 512 )) sectors
+verbose NEWSIZE="${NEWSIZE}" bytes, $(( NEWSIZE / 512 )) sectors
+verbose DISKSIZE="${DISKSIZE}" bytes, $(( DISKSIZE / 512 )) sectors
+verbose NEWDISKSIZE="${NEWDISKSIZE}" bytes, $(( NEWDISKSIZE / 512 )) sectors
+verbose FILESIZE="${FILESIZE}" bytes, $(( FILESIZE / 512 )) sectors
 GROWTH=$(( NEWDISKSIZE - FILESIZE ))
-msg GROWTH="${GROWTH}" bytes, $(( GROWTH / 512 )) sectors
+verbose GROWTH="${GROWTH}" bytes, $(( GROWTH / 512 )) sectors
 
-ls -l "${PI_IMAGE_FILE}"
 dd if=/dev/zero of="${PI_IMAGE_FILE}" bs=512 count=$(( GROWTH / 512 )) oflag=append conv=notrunc,nocreat seek=${FILEBLKS}
-ls -l "${PI_IMAGE_FILE}"
 
-echo nsize=$(( $(stat --printf=%s "${PI_IMAGE_FILE}") / 512 ))
-echo "LABEL=${LABELID}"
-echo "BOOT=${BOOTSIZE}${UNITS}"
-echo "ROOT=${ROOTSIZE}${UNITS} (old)"
-echo "ROOT=$(( ${NEWSIZE} / ${FACTOR} ))${UNITS} (new)"
+
 
 PARTBASE="/dev/$(basename "${PI_LOOPDEV}")p"
 NEWPART="label: dos
@@ -162,21 +156,16 @@ unit: sectors
 
 ${PARTBASE}1 : start=${PARTITION1[start]}, size=${PARTITION1[size]}, type=${PARTITION1[type]}
 ${PARTBASE}2 : start=${PARTITION2[start]}, size=$(( ${NEWSIZE} / 512 )), type=${PARTITION2[type]}"
-echo NEWPART="${NEWPART}" 1>&2
 
 partprobe -s "${PI_LOOPDEV}"
 
 ## Sanity check before we modify
 e2fsck -n -f "${PI_ROOTDEV}"
 
-echo "Updating to:"
-echo "${NEWPART}"
+debug NEWPART="${NEWPART}"
 
 echo "${NEWPART}" | sfdisk "${PI_LOOPDEV}"
 
-echo New size should be $(( NEWSIZE / 4096 )) 4K blocks
-echo  Syncing....
-sync
 
 sleep 5
 
@@ -188,11 +177,8 @@ find_partitions
 
 sfdisk --dump "${PI_LOOPDEV}"
 
-losetup --list
 
-echo PI_LOOPDEV="${PI_LOOPDEV}"=$(( $(stat --printf=%s "${PI_IMAGE_FILE}") / 512 ))
-echo PI_BOOTDEV="${PI_BOOTDEV}"=$(( $(stat --printf=%s "${PI_BOOTDEV}") / 512 ))
-echo PI_ROOTDEV="${PI_ROOTDEV}"=$(( $(stat --printf=%s "${PI_ROOTDEV}") / 512 ))
+debug New size should be $(( NEWSIZE / 4096 )) 4K blocks
 
 sleep 5
 
@@ -207,3 +193,8 @@ sync
 
 ## Sanity check after we modify
 do_fsck
+
+msg "LABEL=${LABELID}"
+msg "BOOT=${BOOTSIZE}${UNITS}"
+msg "ROOT=${ROOTSIZE}${UNITS} (old)"
+msg "ROOT=$(( ${NEWSIZE} / ${FACTOR} ))${UNITS} (new)"
