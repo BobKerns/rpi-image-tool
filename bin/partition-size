@@ -7,7 +7,7 @@
 ####      This tool will not shrink filesystems.
 ####   Usage: ${PI_INVOKER} expandfs [B|K|M|G]
 ###@      Expand the root filesystem to match the partition size.
-####   Usage: ${PI_INVOKER} show [B|K|M|G]
+####   Usage: ${PI_INVOKER} show
 ####      Show the partition allocations
 #### The defauilt units is K (1024 bytes).
 
