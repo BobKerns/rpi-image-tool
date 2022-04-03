@@ -125,9 +125,9 @@ find_partitions() {
     export PI_BOOTDEV="/dev/mapper/${PARTS[0]}"
     export PI_ROOTDEV="/dev/mapper/${PARTS[1]}"
     export PI_LOOPDEV="/dev/$(echo "${PARTS[0]}" | sed -E 's/p[0-9]+$//')"
-    verbose Found PI_LOOPDEV="${PI_LOOPDEV}"
-    verbose Found PI_BOOTDEV="${PI_BOOTDEV}" PI_BOOT="${PI_BOOT}"
-    verbose Found PI_ROOTDEV="${PI_ROOTDEV}" PI_ROOT="${PI_ROOT}"
+    verbose "Found PI_LOOPDEV=${PI_LOOPDEV}"
+    verbose "Found PI_ROOTDEV=${PI_ROOTDEV} PI_ROOT=${PI_ROOT}"
+    verbose "Found PI_BOOTDEV=${PI_BOOTDEV} PI_BOOT=${PI_BOOT}"
 }
 
 # Mount the specified directory on the specified location
@@ -273,6 +273,10 @@ while [ ! -z "$*" -a -z "$options_done" ]; do
             ;;
         --verbose|-v)
             export PI_VERBOSE=yes
+            shift
+            ;;
+        --nomount)
+            export PI_NO_MOUNT=yes
             shift
             ;;
         *)

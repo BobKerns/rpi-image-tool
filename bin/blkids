@@ -3,10 +3,6 @@
 #### List identifying info about an image and its partitions
 #### Usage ${PI_INVOKER} $(basename "$0")
 
-. "${PI_CMDS}/inc/vars.sh"
-
-do_mount_all
-
 blkid "${PI_LOOPDEV}"
 blkid "${PI_BOOTDEV}"
 blkid "${PI_ROOTDEV}"

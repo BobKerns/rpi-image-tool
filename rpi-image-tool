@@ -53,6 +53,11 @@ while [ -z "${SUBCMD}" -a ! -z "$*" ]; do
             export PI_VOLUME="$1"
             shift
             ;;
+        --nomount)
+            shift
+            export PI_NO_MOUNT=yes
+            options+=(--nomount)
+            ;;
         --help|'-?')
             shift
             options+=(--help)

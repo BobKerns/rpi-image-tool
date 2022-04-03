@@ -14,26 +14,30 @@ export PI_INCLUDES="$(cd "$(dirname "$0")"; pwd)"
 
 export PI_INVOKER="${PI_INVOKER:-"$(basename "$0")"}"
 
-case "$1" in
-    --debug|-d|-vv)
-        export PI_VERBOSE=yes
-        export PI_DEBUG=yes
-        shift
-        ;;
-    --verbose|-v)
-        export PI_VERBOSE=yes
-        shift
-        ;;
-    --help|'-?')
-        usage
-        ;;
-esac
-
 # Harmonize relative paths
 cd /data/local
 if [ -z "$*" ]; then
     usage
 fi
+
+# Allow overrides of default processing, notably mounting the image's
+# filesystems. e.g.:
+#   export PI_NO_MOUNT=yes
+
+target="$(enable -n export; enable -n help; which "$1")"
+
+if [ -f "${target}.override" ]; then
+    . "${target}.override"
+elif [ -f "/data/local/$1.override" ]; then
+    . "/data/local/$1.override"
+elif [ -f "/data/bin/$1.override" ]; then
+    . "/data/bin/$1.override"
+fi
+
+if [ -z "${PI_NO_MOUNT}" ]; then
+    do_mount_all
+fi
+
 
 # Allow these to be regular commands
 enable -n help
