@@ -15,9 +15,9 @@
 
 find_partitions
 
-SUBCMD="${1^^}"
+SUBCMD="${1-show}"
 
-case "${SUBCMD}" in
+case "${SUBCMD^^}" in
     ADD|SET)
         AMT="${2}"
         UNITS="${3^^}"
