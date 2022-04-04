@@ -13,17 +13,30 @@ partitions from a Raspberry Pi image mounted as a filesystem under `/data/root`.
 It also allows importing a Raspberry Pi image and running it in a docker container, even on non-ARM
 architectures (e.g. my Intel iMac, but should also work on Windows).
 
+This enables workflows like this to be performed on any platform:
+
+1. Download a stock Raspberry Pi OS image
+2. Import the image into the tool
+3. Expand the root filesystem to make room
+4. Alter configuration files
+5. Import the modified image file into docker
+6. Do further setup in a running image (such as installing packages).
+7. Export a new Raspberry Pi OS image file to copy to an SD card.
+
+## Usage
+
 For ease of use, this is packaged behind three front-end scripts:
 
 * `rpi-image-tool`: The main tool
+* `grow-root-fs`: Increase the size of the root filesystem
 * `dockerify`: Import a Raspery Pi boot image file as a docker container.
 * `pi`: Invoke a Raspberry Pi container.
 
-## rpi-image-tool
+### rpi-image-tool
 
 > Usage: rpi-image-tool \[--verbose|--debug] \[--interactive] [--volume volname] <.img file> \<cmd> \<args*>
 
-Root and boot filesystems will be mounted under `/data/build/root` and `/data/build/root/boot`
+Root and boot filesystems will be normally mounted under `/data/build/root` and `/data/build/root/boot`
 and the supplied command will be executed.
 
 The command can be a local script, or it can be `bash`, `emacs`, `nano`, or `vi` to allow interactive
@@ -34,6 +47,9 @@ Additionally, convenience commands are provided:
 
 * [`blkids`](bin/blkids) — list the UUID's and labels of the partitioms and the partition map.
 * [`export`](bin/export) — convert an disk image to a `.tar` file for import with `docker import`
+* [`fsck`](bin/fsck) — perform `fsck` on the image filesystems.
+* [`help`](bin/help) — Display a command's help documentation.
+* [`image`](bin/image) — Load or delete the image to be configured.
 * [`partition-size`](bin/partition-size) - Show the partition sizes, or modify the root partition size.
 
 If invoked via the provided script ([`rpi-image-tool`](rpi-image-tool)), images and scripts can be
@@ -43,13 +59,13 @@ The script mounts this under `/data/local/`, and this becomes the current workin
 The `bin/` directory (`/data/local/bin`) under the working directory will be added to `$PATH`,
 making scripting more convenient.
 
-The supplied image file will be mounted at `/data/img`, and `$PI_IMAGE_FILE` will point to it.
+If an image file has been loaded, it will be mounted at `/work/image`, and `$PI_IMAGE_FILE` will point to it.
 `$PI_USER_IMAGE_FILE` will hold the user-supplied path, useful for error messages.
 
 The docker container which performs the work must be run as a privileged container, to be able to mount
 the image file's partitions.
 
-## Running Raspberry Pi OS
+### Running Raspberry Pi OS
 
 You can run Raspberry Pi OS under `docker`, even on an Intel system, via the `quemu` emulation package.
 
@@ -88,7 +104,7 @@ The current directory is mounted in the image as `/host` to make it easy to tran
 On exiting, the container will be deleted. Other behaviors can be had by invoking `docker run` directly,
 omitting the `--rm` option.
 
-## Scripting
+### Scripting
 
 Random one-off updates and modifications are to be discouraged.
 To achieve a repeatable process, _all_ setup should be scripted.
@@ -147,7 +163,8 @@ The scripts should follow the following format:
 ####
 #### The space after the #### is required, unless the line is blank.
 
-# This sets up variables, and ensures that the --help option is handled uniformly.
+# This sets up variables and utility shell functions, and ensures
+# that the --help, --verbose, and --debug options are handled uniformly.
 . "${PI_CMDS}/inc/vars.sh"
 
 echo <<EOF
@@ -156,8 +173,13 @@ You may invoke non-bash tools with 'exec', e.g. 'exec node mysripts/my-node-scri
 This would be prefered over forcing my-node-script into the necessary form.
 EOF
 
-# exec node myscripts/my-node-script
+exec node myscripts/my-node-script
 ```
+
+A few commands may need to alter the setup, such as skipping the mounting of the image filesystems.
+To accomplish this for a script `myscript`, create a file `myscript.override`. Setting the variable `PI_NO_MOUNT` will suppress the mounting. You can use the bash function `do_mount_all` to later mount
+the filesystems (or `find_partions` to map the devices and set the environment variables w/o mounting
+the filesystems).
 
 ### Environment Variables
 
@@ -171,6 +193,8 @@ The following environment variables are set up prior to invoking the subcommand 
   * The host user invoking the builder
 * `PI_USER_IMAGE_FILE`
   * The image file path as supplied by the user, for error reporting
+* `PI_IMAGE_FILE_ABSOLUTE`
+  * The absolute path of the image file in the host environment, for error reporting.
 * `PI_INVOKER_BASE`
   * The name of the command used to invoke the builder, for help messages and errors.
 * `PI_INVOKER`
@@ -179,6 +203,10 @@ The following environment variables are set up prior to invoking the subcommand 
   * Non-null iff `--interactive` is specified, or if the command to run is `bash`, `vi`, `nano`, or `emacs`.
 * `PI_BUILDER`
   * The name:tag of the docker container that performs the work.
+* `PI_VOLUME_SUFFIX`
+  * The suffix for the name of the docker volume used to hold the image and intermediate work.
+* `PI_VOLUME`
+  * The full name of the docker volume used to hold the image and intermediate work.
 
 #### In the builder
 
@@ -210,6 +238,12 @@ The following environment variables are set up prior to invoking the subcommand 
   * The device name from which the image root filesystem is mounted.
 * `PI_LOOPDEV`
   * The device name for the full image file as a block device.
+* `PI_IMAGE_FILE`
+  * The path to the image to be processed.
+* `PI_NO_MOUNT`
+  * If set non-blank, the start script will skip the step of mapping and mounting the image filesystems.
+    This happens before the supplied subcommand script is run; it can be set in a `.override` file for
+    the script or with the `--no-mount` command line option.
 
 ## Non-Raspberry Pi OS images
 
