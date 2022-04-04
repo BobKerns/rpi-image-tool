@@ -1,0 +1,62 @@
+#!/bin/bash
+
+PI_INVOKER="$0"
+PI_BASE="$(dirname "${PI_INVOKER}")"
+
+#### Set the partition size of the root partition (the second partition)
+####   Usage: ${PI_INVOKER} add|set <size> [B|K|M|G]
+####      Add or set the root partition size.
+####      This tool will not shrink filesystems.
+####   Usage: ${PI_INVOKER} show
+####      Show the partition allocations
+
+
+
+export PI_INVOKER="$(basename "$0")"
+
+# Parse any supplied options.
+while [ -z "${SUBCMD}" -a ! -z "$*" ]; do
+    opt="$1"
+    shift
+    # Scan for options to pass on
+    case "${opt}" in
+        --interactive|-i)
+            options+=(--interactive)
+            ;;
+        --verbose|-v)
+            options+=(--verbose)
+            ;;
+        --debug|-d|-vv)
+            options+=(--debug)
+            ;;
+        --builder|-b)
+            options+=(--builder "$1")
+            shift
+            ;;
+        --volume)
+            export PI_VOLUME="$1"
+            shift
+            ;;
+        --help|'-?'|help)
+            script="$(grep -E '^#### |^####$' "${0}" | sed -E -e 's/^#### ?/echo "/' -e 's/$/";/')"
+            eval "${script}" 1>&2
+            exit 0
+            ;;
+        *)
+            SUBCMD="$1"
+            ;;
+        esac
+done
+
+expand_partition() {
+    "${PI_BASE}"/rpi-image-tool "${options[@]}" partition-size "$@"
+}
+
+expand_fs() {
+    local subcmd="$(echo "${SUBCMD:-show}" | tr a-z A-Z)"
+    if [ "${subcmd}" != 'SHOW' ]; then
+        "${PI_BASE}"/rpi-image-tool "${options[@]}" partition-size  expandfs
+    fi
+}
+
+expand_partition && expand_fs

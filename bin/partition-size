@@ -3,7 +3,7 @@
 #### Set the partition size of the Linux partition (the second partition)
 ####   Usage: ${PI_INVOKER} add|set <size> [B|K|M|G]
 ####      Add or set the root partition size. This must be followed by
-####      ${PI_INVOKER expandfs to resize the filesystem.
+####      ${PI_INVOKER} expandfs to resize the filesystem.
 ####      This tool will not shrink filesystems.
 ####   Usage: ${PI_INVOKER} expandfs [B|K|M|G]
 ###@      Expand the root filesystem to match the partition size.
