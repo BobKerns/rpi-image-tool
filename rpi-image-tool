@@ -16,7 +16,7 @@ abspath() {
 DFLT_BUILDER='rpiimagetool'
 export PI_BUILDER=${PI_BUILDER:-"${DFLT_BUILDER}"}
 
-export PI_VOLUME=default
+export PI_VOLUME_SUFFIX=default
 
 export PI_INVOKER_BASE="$(basename "$0")"
 export PI_INVOKER="${PI_INVOKER_BASE} [--verbose|--debug] [--interactive] [--builder scriptname] [--volume volname]"
@@ -50,7 +50,7 @@ while [ -z "${SUBCMD}" -a ! -z "$*" ]; do
             ;;
         --volume)
             shift
-            export PI_VOLUME="$1"
+            export PI_VOLUME_SUFFIX="$1"
             shift
             ;;
         --nomount)
@@ -69,6 +69,7 @@ while [ -z "${SUBCMD}" -a ! -z "$*" ]; do
             SUBCMD=help
             ;;
         image)
+            # We need to mount the image file
             PI_IMAGE_ARG="$2"
             SUBCMD=image
             ;;
@@ -84,8 +85,8 @@ U_VOLUME=
 if [ "${PI_BUILDER}" != "${DFLT_BUILDER}" ]; then
     U_BUILDER=" --builder '${PI_BUILDER}'"
 fi
-if [ "${PI_VOLUME}" != default ]; then
-    U_VOLUME=" --volume '${PI_VOLUME}'"
+if [ "${PI_VOLUME_SUFFIX}" != default ]; then
+    U_VOLUME=" --volume '${PI_VOLUME_SUFFIX}'"
 fi
 export PI_INVOKER="${PI_INVOKER_BASE} [--verbose|--debug] [--interactive]${U_BUILDER}${U_VOLUME}"
 
@@ -113,6 +114,7 @@ fi
 export PI_USER_IMAGE_FILE="${PI_IMAGE_ARG}"
 export PI_USER_CWD="$(pwd)"
 export PI_USER_NAME="$(whoami)"
+export PI_VOLUME="pi-image-tool-vol_${PI_VOLUME_SUFFIX}"
 
 declare -a mounts exports mount_args export_args
 mounts=()
@@ -124,11 +126,12 @@ exports=(
     PI_INVOKER
     PI_INTERACTIVE
     PI_BUILDER
+    PI_VOLUME_SUFFIX
     PI_VOLUME
     )
 mount_args=(
     -v"${PWD}:/data/local"
-    --mount "type=volume,source=pi-image-tool-vol_${PI_VOLUME},destination=/work"
+    --mount "type=volume,source=${PI_VOLUME},destination=/work"
 )
 export_args=()
 
