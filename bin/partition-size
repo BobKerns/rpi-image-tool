@@ -143,8 +143,8 @@ show_status() {
     msg "Size of image=$(dspace $(( FILESIZE )) )"
 }
 
-case "${SUBCMD}" in
-    SHOW)
+case "${SUBCMD^^}" in
+    SHOW|'')
         echo "LABEL=${LABELID}"
         echo "BOOT=$(dspace $(( BOOTSIZE_BYTES )) )"
         echo "ROOT=$(dspace $(( ROOTSIZE_BYTES )) )"
