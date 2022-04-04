@@ -6,4 +6,7 @@ shift
 NAME="${1-pi:latest}"
 shift
 
-"${DIR}/rpi-image-tool" "${PI_IMAGE_FILE}" export - | docker import - "${NAME}" "$@"
+echo "Creating docker image ${name} from disk image ${PI_IMAGE_FILE}"
+echo "This will take some time."
+
+"${DIR}/rpi-image-tool" export - | docker import - "${NAME}" "$@"
