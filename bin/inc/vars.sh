@@ -19,12 +19,10 @@ export PI_IMAGE_FILE=/work/image
 # Should be the same as in rpi-image-tool
 export PI_IMAGE_SRC_MOUNT="${PI_IMAGE_SRC_MOUNT-/data/image}"
 
+# Our own process ID, to enable aborting on error or c-C.
 SELF=$$
 
-export PI_VERBOSE="${PI_VERBOSE}"
-export PI_VERBOSE="${PI_DEBUG}"
-
-# Show usage for the current or
+# Show usage for the current or specified command.
 usage() {
      local cmd="${1:-"${CMD}"}"
      local script="$(grep -E '^#### |^####$' "${cmd}" | sed -E -e 's/^#### ?/echo "/' -e 's/$/";/')"
@@ -42,25 +40,30 @@ usage() {
     fi
  }
 
+# Print an informational message to stderr
 msg() {
     echo "$@" 1>&2
 }
 
+# Print a mesage to stderr if --verbose or --debug
 verbose() {
     test ! -z "${PI_VERBOSE}${PI_DEBUG}" && msg "$@"
     return 0
 }
 
+# Print a message to stderr if --debug.
 debug() {
     test ! -z "${PI_DEBUG}" && msg "$@"
     return 0
 }
 
-
+# Print an error message and exit.
 error() {
     msg ERROR: "$@"
+    # We suppress decoding exit code 126, since we've already logged an error message.
     exit 126
 }
+
 # Unmount the specified directory
 do_unmount() {
     local dir="${1:?}"
@@ -154,6 +157,7 @@ do_mount_all() {
     do_mount "${PI_BOOTDEV:?}" "${PI_BOOT:?}"
 }
 
+# Run the appropriae fsck commands on each of the image partitions.
 do_fsck() {
     sync
     msg "Checking root ${PI_ROOTDEV}"
