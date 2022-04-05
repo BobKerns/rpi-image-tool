@@ -30,7 +30,8 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 
 # Our directory structure should be fairly stable, but no need to reload emacs if it does.
 # So we put creating the directories, setting PATH, and the WORKDIR in the next 3 layers.
-RUN mkdir -p /data /data/build/root /data/build/root/boot /data/bin /data/local/bin /data/mnt
+VOLUME [ "/work", "/data/mnt", "/data/local"]
+RUN mkdir -p /work/build/root /work/build/root/boot /data/bin /data/local/bin /data/mnt
 ENV PATH "/data/local/bin:/data/bin:${PATH}"
 WORKDIR /data/local
 
@@ -42,7 +43,6 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 # Our script data is the most likely to change, and quick to load.
 COPY bin/ /data/bin/
 
-VOLUME [ "/image" ]
 
 # This is the script that runs when we invoke the container. It sets up the context
 # (mounts, environment variables) for the subcommand scripts, and runs them.
