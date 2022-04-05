@@ -5,7 +5,7 @@
 CMD="$0"
 export PI_INCLUDES="${PI_INCLUDES:-"$(cd "$(dirname "$0")"; pwd)"}"
 export PI_CMDS="${PI_CMDS:-"$(dirname "${PI_INCLUDES}")"}"
-DFLT_WDIR="$(dirname "${PI_CMDS}")"
+DFLT_WDIR="/work"
 export PI_WORKDIR="${PI_WORKDIR:-"${DFLT_WDIR}"}"
 export PI_BUILD="${PI_BUILD:-"${PI_WORKDIR}/build"}"
 export PI_TMP="${PI_TMP:-"${PI_BUILD}/tmp"}"
@@ -139,6 +139,7 @@ do_mount() {
     local mapped="${1:?}"
     local mountpoint="${2:?}"
     (
+        mkdir -p "${mountpoint}"
         mount -o loop "${mapped}" "${mountpoint}" \
         && verbose "${mapped} mounted on ${mountpoint}"
     ) || (
