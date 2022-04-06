@@ -32,8 +32,7 @@ case "${T}" in
             msg "Try ${PI_INVOKER} ${SUBCMD} --help"
             exit 0
         else
-            msg "Dunno what ${SUBCMD} is, but bash seems to think it is a file somewhere. 'which ${SUBCMD}' disagrees."
-            exit 0
+            error "Dunno what ${SUBCMD} is, but bash seems to think it is a file somewhere. 'which ${SUBCMD}' disagrees."
         fi
         ;;
     alias|keyword|function|builtin)
