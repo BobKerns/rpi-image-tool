@@ -18,7 +18,7 @@ case "$1" in
         usage
         exit
         ;;
-    --clean|--clean)
+    --clear|--clean)
         CLEAN=yes
         ;;
     *)
@@ -28,14 +28,21 @@ esac
 
 
 if [ ! -z "${CLEAN}" ]; then
+    msg "Emptying volume ${PI_VOLUME}"
     rm -rf /work/*
 else
     if [ ! -r "${PI_IMAGE_SRC_MOUNT}" ]; then
         msg "No image file supplied."
         usage
     fi
-    msg Copying "${PI_IMAGE_SRC_MOUNT}" to "${PI_IMAGE_FILE}"
-
-    cp -fv "${PI_IMAGE_SRC_MOUNT}" "${PI_IMAGE_FILE}"
+    ext="${PI_USER_IMAGE_FILE: -4}"
+    if [ "${ext^^}" = '.ZIP' ]; then
+        file="$(zipinfo -1 "${PI_IMAGE_SRC_MOUNT}" | head -1)"
+        msg extracting "${PI_USER_IMAGE_FILE}/${file}" to "${PI_IMAGE_FILE}"
+        unzip -p "${PI_IMAGE_SRC_MOUNT}" "${file}" >"${PI_IMAGE_FILE}"
+    else
+        msg Copying "${PI_IMAGE_SRC_MOUNT}" to "${PI_IMAGE_FILE}"
+        cp -fv "${PI_IMAGE_SRC_MOUNT}" "${PI_IMAGE_FILE}"
+    fi
     chmod a+w "${PI_IMAGE_FILE}"
 fi

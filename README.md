@@ -49,7 +49,8 @@ Additionally, convenience commands are provided:
 * [`export`](bin/export) — convert an disk image to a `.tar` file for import with `docker import`
 * [`fsck`](bin/fsck) — perform `fsck` on the image filesystems.
 * [`help`](bin/help) — Display a command's help documentation.
-* [`image`](bin/image) — Load or delete the image to be configured.
+* [`image`](bin/image) — Load or delete the image to be configured. This can be a `.img` file or a
+  `.zip` file containing the image.
 * [`partition-size`](bin/partition-size) - Show the partition sizes, or modify the root partition size.
 
 If invoked via the provided script ([`rpi-image-tool`](rpi-image-tool)), images and scripts can be

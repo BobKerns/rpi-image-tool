@@ -114,8 +114,8 @@ do_unmount_all() {
 
 # Verify that the image has been loaded.
 check_image() {
-    if [ ! -w "${PI_IMAGE_FILE}" ]; then
-        error "No image file has been provided. Run the image <imagefile> subcommand."
+    if [ ! -w "${PI_IMAGE_FILE}" -a -z "${PI_NO_MOUNT}" ]; then
+        error "No image file has been provided. Run the image <imagefile> subcommand. $PI_NO_MOUNT"
     fi
 }
 

@@ -38,7 +38,7 @@ WORKDIR /data/local
 # The main list of packages to be installed.
 
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
-    apt-get -y install git kpartx kmod multipath-tools parted errno dosfstools bc
+    apt-get -y install git kpartx kmod multipath-tools parted errno dosfstools bc zip
 
 # Our script data is the most likely to change, and quick to load.
 COPY bin/ /data/bin/
