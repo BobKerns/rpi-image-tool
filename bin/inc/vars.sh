@@ -11,6 +11,7 @@ export PI_BUILD="${PI_BUILD:-"${PI_WORKDIR}/build"}"
 export PI_TMP="${PI_TMP:-"${PI_BUILD}/tmp"}"
 export PI_DATA="${PI_DATA:-"${PI_WORKDIR}/data"}"
 export PI_SAVED="${PI_SAVED:-"${PI_WORKDIR}/saved"}"
+export PI_PENDING="${PI_PENDING:-"${PI_WORKDIR}/pending"}"
 
 export PI_ROOT="${PI_ROOT:-"${PI_BUILD}/root"}"
 export PI_BOOT="${PI_BOOT:-"${PI_ROOT}/boot"}"
