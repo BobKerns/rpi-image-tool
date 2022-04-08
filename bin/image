@@ -3,46 +3,78 @@
 #### Load an image file to be configured.
 #### Usage:
 ####   ${PI_INVOKER} $(basename "$0") <imagefile>
-####      Load the <imagefile> into the work volume
+####      Import the <imagefile> into the work volume
+####      Pending modifications and saved originals are discarded.
 ####   ${PI_INVOKER} $(basename "$0") --clean
 ####       Clear the work volume.
 ####       This deletes all the files in the work volume. If you specify the work volume
 ####       manually, be certain you specify the correct one.
 
-. "${PI_CMDS}/inc/vars.sh"
 
-CLEAN=
-
-case "$1" in
-    ''|--help)
-        usage
-        exit
-        ;;
-    --clear|--clean)
-        CLEAN=yes
-        ;;
-    *)
-        shift
-        ;;
-esac
-
-
-if [ ! -z "${CLEAN}" ]; then
+clean() {
     msg "Emptying volume ${PI_VOLUME}"
     rm -rf /work/*
-else
+    exit
+}
+
+srcfile="${PI_IMAGE_FILE}_src.txt"
+
+# Clean up if we abort before completing the copy.
+cleanup() {
+    rm -f "${PI_IMAGE_FILE}" "${srcfile}"  "${PI_PENDING}" "${PI_SAVED}" "${PI_TMP}"
+}
+
+install_image() {
     if [ ! -r "${PI_IMAGE_SRC_MOUNT}" ]; then
         msg "No image file supplied."
         usage
     fi
-    ext="${PI_USER_IMAGE_FILE: -4}"
+    rm -rf "${PI_TMP}" "${PI_SAVED}" "${PI_PENDING}"
+    mkdir -p "${PI_TMP}" "${PI_SAVED}" "${PI_PENDING}"
+    local ext="${PI_USER_IMAGE_FILE: -4}"
+    trap cleanup EXIT
     if [ "${ext^^}" = '.ZIP' ]; then
         file="$(zipinfo -1 "${PI_IMAGE_SRC_MOUNT}" | head -1)"
         msg extracting "${PI_USER_IMAGE_FILE}/${file}" to "${PI_IMAGE_FILE}"
         unzip -p "${PI_IMAGE_SRC_MOUNT}" "${file}" >"${PI_IMAGE_FILE}"
+        echo "${PI_IMAGE_USER_ABSOLUTE}/${file}" >"${srcfile}"
     else
         msg Copying "${PI_IMAGE_SRC_MOUNT}" to "${PI_IMAGE_FILE}"
         cp -fv "${PI_IMAGE_SRC_MOUNT}" "${PI_IMAGE_FILE}"
+        echo "${PI_IMAGE_USER_ABSOLUTE}" >"${srcfile}"
     fi
-    chmod a+w "${PI_IMAGE_FILE}"
+    chmod u+w "${PI_IMAGE_FILE}"
+    trap - EXIT
+}
+
+# Show information about the installed image.
+show_image() {
+    if [ -w "${PI_IMAGE_FILE}" ]; then
+        local src="$(cat "${PI_IMAGE_FILE}_src.txt")"
+        echo "Image installed from ${src:-(unknown)}"
+        ls -l "${PI_IMAGE_FILE}"
+        exit
+    else
+        echo "No image has been installed."
+    fi
+}
+
+while [ "${1:0:2}" = '--' ]; do
+    case "$1" in
+        --clear|--clean)
+            shift
+            clean
+            ;;
+        *)
+            shift
+            usage
+            exit
+            ;;
+    esac
+done
+
+if [ -z "$1" ]; then
+    show_image
+else
+    install_image
 fi
