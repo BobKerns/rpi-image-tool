@@ -12,6 +12,21 @@
 export PI_INCLUDES="$(cd "$(dirname "$0")"; pwd)"
 . "${PI_INCLUDES}/vars.sh"
 
+declare -a options=()
+while [ "${1:0:2}" = '--' ]; do
+    case "$1" in
+        --nomount)
+            export PI_NO_MOUNT=yes
+            shift
+            ;;
+        *)
+            options+=("$1")
+            shift
+            ;;
+    esac
+done
+set -- "${options[@]}" "$@"
+
 export PI_INVOKER="${PI_INVOKER:-"$(basename "$0")"}"
 
 # Harmonize relative paths
@@ -24,7 +39,7 @@ fi
 # filesystems. e.g.:
 #   export PI_NO_MOUNT=yes
 
-target="$(enable -n export; enable -n help; which "$1")"
+target="$(enable -n export; enable -n help; which -- "$1")"
 
 if [ -f "${target}.override" ]; then
     . "${target}.override"

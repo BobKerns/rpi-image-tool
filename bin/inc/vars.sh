@@ -239,9 +239,8 @@ installHome() {
     find "${PI_ROOT:?}/home/${user}/.ssh" -type f -exec chmod 600 {} \;
 }
 
-
-unset options_done
-while [ ! -z "$*" -a -z "$options_done" ]; do
+declare -a options=()
+while [ "${1:0:2}" = '--' ]; do
     case "$1" in
         --help|'-?')
             usage
@@ -261,7 +260,10 @@ while [ ! -z "$*" -a -z "$options_done" ]; do
             shift
             ;;
         *)
-            options_done=true
+            options+=("$1")
+            shift
             ;;
     esac
 done
+
+set -- "${options[@]}" "$@"
