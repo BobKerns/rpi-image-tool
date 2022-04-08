@@ -227,14 +227,6 @@ copyUntil() {
     copyUntilInternal "${2-## Added}" <"${PI_ROOT:?}/$1" >"${PI_TMP:?}/$1"
 }
 
-# append file
-# Appends file from data to the destination (result in buildtmp)
-append() {
-    cp "${BUILDROOT:?}/${1:?}" "${PI_TMP:?}/${1:?}"
-    appendLine "$1" '## Added'
-    cat "${PI_DATA:?}/${1:?}" >>"${PI_TMP:?}/${1:?}"
-}
-
 # appendLine file line
 # Result in buildtmp
 appendLine() {

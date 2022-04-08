@@ -1,0 +1,5 @@
+#!/bin/bash
+
+#### Append a file from or source data to a file in the image.
+#### Result will be placed in the \${PI_TMP} directory for later installation.
+####   Usage: ${PI_INVOKER} $(basename "$0") <src> <dest>
