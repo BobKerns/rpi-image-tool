@@ -22,6 +22,7 @@ export PI_INVOKER_BASE="$(basename "$0")"
 export PI_INVOKER="${PI_INVOKER_BASE} [--verbose|--debug] [--interactive] [--builder scriptname] [--volume volname]"
 # Should be the same as in vars.sh
 export PI_IMAGE_SRC_MOUNT=/data/image
+export PI_TMP=/work/tmp
 
 # Parse any supplied options.
 declare -a options=()
@@ -128,6 +129,7 @@ exports=(
     PI_BUILDER
     PI_VOLUME_SUFFIX
     PI_VOLUME
+    PI_TMP
     )
 mount_args=(
     -v"${PWD}:/data/local"
@@ -162,7 +164,7 @@ if [ "${INTERACTIVE}" = '-it' ]; then
     docker run --privileged --rm $INTERACTIVE \
         "${mount_args[@]}" \
         "${export_args[@]}" \
-        --tmpfs /data/build/tmp:rw,noexec,nosuid,size=100M \
+        --tmpfs "${PI_TMP}:rw,noexec,nosuid,size=100M" \
         "${PI_BUILDER}" "${options[@]}" "$@"
 else
     # When not in interactive mode, run docker in the background so that bash
@@ -172,7 +174,7 @@ else
         --cidfile "${CIDFILE}" \
         "${mount_args[@]}" \
         "${export_args[@]}" \
-        --tmpfs /data/build/tmp:rw,noexec,nosuid,size=100M \
+        --tmpfs "${PI_TMP}:rw,noexec,nosuid,size=100M" \
         "${PI_BUILDER}" "${options[@]}" "$@" &
     wait $!
 fi

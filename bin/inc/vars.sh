@@ -8,8 +8,8 @@ export PI_CMDS="${PI_CMDS:-"$(dirname "${PI_INCLUDES}")"}"
 DFLT_WDIR="/work"
 export PI_WORKDIR="${PI_WORKDIR:-"${DFLT_WDIR}"}"
 export PI_BUILD="${PI_BUILD:-"${PI_WORKDIR}/build"}"
-export PI_TMP="${PI_TMP:-"${PI_BUILD}/tmp"}"
-export PI_DATA="${PI_DATA:-"${PI_WORKDIR}/data"}"
+export PI_TMP="${PI_TMP:-"${PI_WORKDIR}/tmp"}"
+export PI_DATA="${PI_DATA:-"/data/local"}"
 export PI_SAVED="${PI_SAVED:-"${PI_WORKDIR}/saved"}"
 export PI_PENDING="${PI_PENDING:-"${PI_WORKDIR}/pending"}"
 
@@ -96,17 +96,8 @@ do_delete_loop() {
     done
 }
 
-# Delete our temporary files
-do_delete_tmp() {
-    if [ -d "${PI_TMP:?}" ]; then
-        debug "Removing previous temp ${PI_TMP:?}"
-        rm -rf "${PI_TMP:?}" 2>/dev/null
-    fi
-}
-
 # Unmount all our directories, and clean up our temporary directory.
 do_unmount_all() {
-    do_delete_tmp
     do_unmount "${PI_BOOT:?}"
     do_unmount "${PI_ROOT:?}"
     sleep 1
@@ -168,14 +159,6 @@ do_fsck() {
     msg "Checking /boot ${PI_BOOTDEV}"
     dosfsck -wvyV "${PI_BOOTDEV}"
     sync
-}
-
-# mkktmp dir
-# make a directory in our temporary workspace.
-# Takes the full relative or absolute path
-mktmp() {
-    rm -rf "${1:?}" 2>/dev/null
-    mkdir -p "${1:?}"
 }
 
 # copy file
