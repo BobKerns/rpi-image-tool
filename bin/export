@@ -1,11 +1,10 @@
 #!/bin/bash
 
-#### Export a tar file for import with the docker import command.
-#### Usage ${PI_INVOKER} $(basename "$0") [outfile]
+#### Export a tar file suitable for import with the docker import command.
+####   Usage ${PI_INVOKER} $(basename "$0") [outfile]
+####   If [outfile] is '-', send to stdout. This is used by the 'dockerify' command.
 
-. "${PI_CMDS}/inc/vars.sh"
-
-
+# Directories to not export
 EXCLUDE=(
     "dev/*"
     "proc/*"
@@ -30,5 +29,5 @@ DFLT="$(basename "${PI_USER_IMAGE_FILE-"${PI_IMAGE_FILE-out}"}" .img).${EPOCHREA
 OUT="${1-$DFLT}"
 shift
 
-
+# Dump the relevant parts of the filesystem to a tar file.
 tar --create --file "${OUT}" "${EXCLUDES[@]}" -C "${PI_ROOT}" --checkpoint=5000 --checkpoint-action='echo=%u %T%*\r' .
