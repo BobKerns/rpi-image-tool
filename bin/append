@@ -3,3 +3,32 @@
 #### Append a file from or source data to a file in the image.
 #### Result will be placed in the \${PI_TMP} directory for later installation.
 ####   Usage: ${PI_INVOKER} $(basename "$0") <src> <dest>
+
+
+
+# appendLine file line
+# Result in buildtmp
+appendLine() {
+    echo "${2:?}" >>"${1:?}"
+}
+
+# append file
+# Appends file from data to the destination (result in buildtmp)
+append() {
+    local src="${PI_DATA:?}/${1:?}"
+    local saved="${PI_SAVED:?}/${1:?}"
+    local tmp="${PI_TMP:?}/${1:?}"
+    local pending="${PI_PENDING:?}/${1:?}"
+    if [ ! -r "${src}" ]; then
+        echo "File ${src} does not exist." 1>&2
+        exit 2
+    fi
+    mkdir -p "$(dirname "${saved}")" "$(dirname "${tmp}")" "$(dirname "${pending}")" \
+    && ([ -e "${saved}" ] || cp "${src}" "${saved}" ) \
+    && cp "${src}" "${tmp}" \
+    && appendLine "${tmp}" '## Added' \
+    && cat "${PI_DATA:?}/${1:?}" >>"${tmp}" \
+    && cp "${tmp}" "${pending}"
+}
+
+append "$1"
