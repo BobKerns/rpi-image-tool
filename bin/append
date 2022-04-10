@@ -12,7 +12,6 @@ append() {
     local src="${PI_ROOT:?}/${1:?}"
     local data="${PI_DATA:?}/{$1:?}"
     local saved="${PI_SAVED:?}/${1:?}"
-    local tmp="${PI_TMP:?}/${1:?}"
     local pending="${PI_PENDING:?}/${1:?}"
     if [ ! -r "${src}" ]; then
         echo "File ${src} does not exist." 1>&2
@@ -20,10 +19,9 @@ append() {
     fi
     mkdir -p "$(dirname "${saved}")" "$(dirname "${tmp}")" "$(dirname "${pending}")" \
     && ([ -e "${saved}" ] || cp "${src}" "${saved}" ) \
-    && cp "${src}" "${tmp}" \
-    && appendLine "${tmp}" '## Added' \
-    && cat "${data}" >>"${tmp}" \
-    && cp "${tmp}" "${pending}"
+    && ([ -e "${pending}" ] || cp "${src}" "${pending}" ) \
+    && appendLine "${pending}" '## Added' \
+    && cat "${data}" >>"${pending}"
 }
 
 append "${1:?}"
