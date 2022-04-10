@@ -31,7 +31,6 @@ set -- "${options[@]}" "$@"
 # Harmonize relative paths
 cd /data/local
 
-echo "* $*"
 if [ -z "$*" ]; then
     export PI_INVOKER="${PI_INVOKER:-"$(basename "$0")"}"
     usage "$(basename "$0")"
