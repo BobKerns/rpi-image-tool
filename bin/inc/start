@@ -27,12 +27,17 @@ while [ "${1:0:2}" = '--' ]; do
 done
 set -- "${options[@]}" "$@"
 
-export PI_INVOKER="${PI_INVOKER:-"$(basename "$0")"}"
 
 # Harmonize relative paths
 cd /data/local
+
+echo "* $*"
 if [ -z "$*" ]; then
-    usage
+    export PI_INVOKER="${PI_INVOKER:-"$(basename "$0")"}"
+    usage "$(basename "$0")"
+    exit
+else
+    export PI_INVOKER="${PI_INVOKER} ${1}"
 fi
 
 # Allow overrides of default processing, notably mounting the image's

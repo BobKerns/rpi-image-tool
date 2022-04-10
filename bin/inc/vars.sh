@@ -23,17 +23,26 @@ export PI_IMAGE_SRC_MOUNT="${PI_IMAGE_SRC_MOUNT-/data/image}"
 # Our own process ID, to enable aborting on error or c-C.
 SELF=$$
 
+export PI_INVOKER_BASE="${PI_INVOKER}"
+
 # Show usage for the current or specified command.
 usage() {
-     local cmd="${1:-"${CMD}"}"
+     local cmd="$(which -- "${1-"${CMD}"}")"
      local script="$(grep -E '^#### |^####$' "${cmd}" | sed -E -e 's/^#### ?/echo "/' -e 's/$/";/')"
+     if [ "${1}" = bash -o "${1}" = "/bin/bash" -o "${1}" = "$(which -- bash)" ]; then
+        msg "Usage: ${PI_INVOKER_BASE} [subcmd]"
+        msg "  With no arguments, invokes bash with the image filesystems mounted."
+        msg "Usage: ${PI_INVOKER_BASE} help [subcmd]"
+        msg "  Documents [subcmd] if it is one of our scripts.
+        exit 0
+     fi
      if [ -z "${script}" ]; then
         msg "The script ${cmd} lacks documentation."
         msg "  Subcommand documentation is a set of comments beginning with '#### '."
         msg "  These are stripped of the '#### ', and shell substitutions are performed,"
         msg "  so help text can reference environment variables, etc."
         msg "  Particlarly useful is the PI_INVOKER environment variable, which holds"
-        msg "  help for the words prior to the subcommand on the command line."
+        msg "  help for the words from the start through the subcommand on the command line."
         exit 0
     else
         eval "${script}" 1>&2
@@ -243,7 +252,8 @@ declare -a options=()
 while [ "${1:0:2}" = '--' ]; do
     case "$1" in
         --help|'-?')
-            usage
+            export PI_INVOKER="${PI_INVOKER_BASE} $2"
+            usage "$2"
             exit 0
             ;;
         --debug|-d|-vv)
@@ -274,7 +284,8 @@ shift
 while [ "${1:0:2}" = '--' ]; do
     case "$1" in
         --help|'-?')
-            usage "$(which -- "${subcmd}")"
+            export PI_INVOKER="${PI_INVOKER_BASE} ${subcmd}"
+            usage "${subcmd}"
             exit 0
             ;;
         *)

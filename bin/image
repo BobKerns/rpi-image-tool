@@ -2,14 +2,14 @@
 
 #### Load an image file to be configured.
 #### Usage:
-####   ${PI_INVOKER} $(basename "$0") <imagefile>
+####   ${PI_INVOKER} <imagefile>
 ####      Import the <imagefile> into the work volume
 ####      Pending modifications and saved originals are discarded.
-####   ${PI_INVOKER} $(basename "$0") --clean
+####   ${PI_INVOKER} --clean
 ####       Clear the work volume.
 ####       This deletes all the files in the work volume. If you specify the work volume
 ####       manually, be certain you specify the correct one.
-####   ${PI_INVOKER} $(basename "$0") --reset
+####   ${PI_INVOKER} --reset
 ####       Clear the pending work from the work volume.
 ####       This deletes all the pending modifications in the work volume.
 
