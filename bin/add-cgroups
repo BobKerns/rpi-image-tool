@@ -1,0 +1,11 @@
+#!/bin/bash
+
+#### Add the necessary CGROUPS to cmdline.txt
+####   Usage: ${PI_INVOKER}
+
+
+CGROUP="$(cat "cgroups.txt")"
+# Insert it, but not if already there
+mkdir -p "${PI_PENDING}/boot" "${PI_SAVED}/boot"
+cp -p "${PI_BOOT}/cmdline.txt" "${PI_SAVED}/boot/"
+sed -E "s/fsck.repair=yes rootwait/fsck.repair=yes ${CGROUP} rootwait/" <"${PI_BOOT}/cmdline.txt" >"${PI_PENDING}/boot/cmdline.txt"
