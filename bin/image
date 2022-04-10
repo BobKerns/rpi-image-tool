@@ -9,19 +9,28 @@
 ####       Clear the work volume.
 ####       This deletes all the files in the work volume. If you specify the work volume
 ####       manually, be certain you specify the correct one.
+####   ${PI_INVOKER} $(basename "$0") --reset
+####       Clear the pending work from the work volume.
+####       This deletes all the pending modifications in the work volume.
 
 
 clean() {
-    msg "Emptying volume ${PI_VOLUME}"
+    msg "Emptying volume ${PI_VOLUME:?}"
     rm -rf /work/*
     exit
 }
 
-srcfile="${PI_IMAGE_FILE}_src.txt"
+srcfile="${PI_IMAGE_FILE?:}_src.txt"
+
+# Reset pending work, but leave the image file
+reset() {
+    rm -f "${srcfile}"  "${PI_PENDING?:}" "${PI_SAVED?:}"
+}
 
 # Clean up if we abort before completing the copy.
 cleanup() {
-    rm -f "${PI_IMAGE_FILE}" "${srcfile}"  "${PI_PENDING}" "${PI_SAVED}" "${PI_TMP}"
+    reset
+    rm -f "${PI_IMAGE_FILE}"
 }
 
 install_image() {
@@ -47,23 +56,37 @@ install_image() {
     trap - EXIT
 }
 
+ls_file() {
+    find "${1:?}" -type f -ls | (
+        while read f1 f2 perms links usr grp size rest; do
+            printf "  %7s %3s %8s %8s %11s %s\n" "${perms}" "${links}" "${usr}" "${grp}" "${size}" "${rest}"
+        done
+    )
+}
+
 # Show information about the installed image.
 show_image() {
     if [ -w "${PI_IMAGE_FILE}" ]; then
         local src="$(cat "${PI_IMAGE_FILE}_src.txt")"
         echo "Image installed from ${src:-(unknown)}"
-        ls -l "${PI_IMAGE_FILE}"
-        exit
+        ls_file "${PI_IMAGE_FILE}" "/work"
     else
         echo "No image has been installed."
     fi
+
+    echo "Modifications pending:"
+    ls_file "${PI_PENDING}/" "${PI_PENDING}" "  "
 }
 
 while [ "${1:0:2}" = '--' ]; do
     case "$1" in
         --clear|--clean)
-            shift
             clean
+            exit
+            ;;
+        --reset)
+            reset
+            exit
             ;;
         *)
             shift
