@@ -266,4 +266,22 @@ while [ "${1:0:2}" = '--' ]; do
     esac
 done
 
-set -- "${options[@]}" "$@"
+# Look ahead for --help and handle it here.
+declare -a suboptions=()
+subcmd="$1"
+shift
+
+while [ "${1:0:2}" = '--' ]; do
+    case "$1" in
+        --help|'-?')
+            usage "$(which -- "${subcmd}")"
+            exit 0
+            ;;
+        *)
+            suboptions+=("$1")
+            shift
+            ;;
+    esac
+done
+
+set -- "${options[@]}" "${subcmd}" "${suboptions[@]}" "$@"
