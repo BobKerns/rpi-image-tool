@@ -1,0 +1,11 @@
+#!/bin/bash
+
+#### Install a file from our local hierarchy into the image.
+#### The file will be pending until the 'commit' subcommmand is run.
+####   Usage: ${PI_INVOKER} <file>
+
+file="${1:?}"
+src="${PI_DATA}/${file}"
+dst="${PI_PEHDIHG}/${file}"
+
+cp -pv "${src}" "${dst}"
