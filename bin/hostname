@@ -1,0 +1,11 @@
+#!/bin/bash
+
+#### Set the hostname in /etc/hostname and /etc/hosts. Result is in ${PI_PENDING for installation on commit.
+####   Usage: ${PI_INVOKER} <hostname>
+
+
+hostname="${1:?}"
+msg "Setting hostname to ${hostname,,}"
+echo "${hostname,,}" >"${PI_PENDING}/etc/hostname"
+cp -p "${PI_"
+printf "127.0.0.1\t${hostname}" >>/etc/hosts

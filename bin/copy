@@ -1,0 +1,21 @@
+#!/bin/bash
+
+#### Copy a file from our data to the ${PI_PENDING} area for installation into the image.
+####   Usage: ${PI_INVOKER} <file>
+
+
+copy() {
+    local src="${PI_ROOT:?}/${1:?}"
+    local data="${PI_DATA:?}/${1:?}"
+    local saved="${PI_SAVED:?}/${1:?}"
+    local pending="${PI_PENDING:?}/${1:?}"
+    if [ ! -r "${src}" ]; then
+        echo "File ${src} does not exist." 1>&2
+        exit 2
+    fi
+    mkdir -p "$(dirname "${saved}")" "$(dirname "${tmp}")" "$(dirname "${pending}")" \
+    && ([ -e "${saved}" ] || cp "${src}" "${saved}" ) \
+    && cat "${data}" >"${pending}"
+}
+
+copy "${1:?}"

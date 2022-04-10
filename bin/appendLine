@@ -1,0 +1,27 @@
+#!/bin/bash
+
+#### Add a line to a file in the image. Result is placed in ${PI_PENDING} for later commit.
+####   Usage: ${PI_INVOKER} <file> <string>
+
+
+appendLine() {
+    local src="${PI_ROOT:?}/${1:?}"
+    local saved="${PI_SAVED:?}/${1:?}"
+    local tmp="${PI_TMP:?}/${1:?}"
+    local pending="${PI_PENDING:?}/${1:?}"
+    if [ ! -r "${src}" ]; then
+        echo "File ${src} does not exist." 1>&2
+        exit 2
+    fi
+    shift
+    mkdir -p "$(dirname "${saved}")" "$(dirname "${tmp}")" "$(dirname "${pending}")" \
+    && ([ -e "${saved}" ] || cp "${src}" "${saved}" ) \
+    && cp "${src}" "${tmp}" \
+    && echo "$@" >>"${tmp}"
+    && cp "${tmp}" "${pending}"
+}
+
+file="${1:?"
+shift
+
+appendLine "${file}" "$@"
