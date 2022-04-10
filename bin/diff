@@ -1,0 +1,21 @@
+#!/bin/bash
+
+#### Compare modified (or pending) files to the originals.
+#### Originals are the version originally in the image when it was imported,
+####   Usage: ${PI_INVOKER} <path> [diff option]*
+
+file="${1:?}"
+shift
+
+pending="${PI_PENDING}/${file}"
+saved="${PI_SAVED}/${file}"
+if [ -d "${pending}" ]; then
+    msg "${file} is a directory."
+elif [ -f "${pending}" ]; then
+    /usr/bin/diff "$@" "${saved}" "${pending}"
+    exit 0
+elif [ ! -f "${PI_ROOT}/${file}" ]; then
+    msg "${PI_ROOT}/${file} not modified."
+else
+    msg "${file}} not found."
+fi
