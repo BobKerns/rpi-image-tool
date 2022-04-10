@@ -3,4 +3,4 @@
 #### Commit the pending changes to the image.
 #### Usage: ${PI_INVOKER}
 
-cp -rv "${PI_PENDING}/" "${PI_ROOT}/"
+cp -rv "${PI_PENDING}"/* "${PI_ROOT}/"
