@@ -33,7 +33,7 @@ usage() {
         msg "Usage: ${PI_INVOKER_BASE} [subcmd]"
         msg "  With no arguments, invokes bash with the image filesystems mounted."
         msg "Usage: ${PI_INVOKER_BASE} help [subcmd]"
-        msg "  Documents [subcmd] if it is one of our scripts.
+        msg "  Documents [subcmd] if it is one of our scripts."
         exit 0
      fi
      if [ -z "${script}" ]; then
