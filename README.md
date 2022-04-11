@@ -46,7 +46,7 @@ passing the `--interactive` flag explicitly.
 Additionally, convenience commands are provided:
 
 * [`blkids`](bin/blkids) — list the UUID's and labels of the partitioms and the partition map.
-* [`export`](bin/export) — convert an disk image to a `.tar` file for import with `docker import`
+* [`export-docker`](bin/export) — convert an disk image to a `.tar` file for import with `docker import`
 * [`fsck`](bin/fsck) — perform `fsck` on the image filesystems.
 * [`help`](bin/help) — Display a command's help documentation.
 * [`image`](bin/image) — Load or delete the image to be configured. This can be a `.img` file or a
