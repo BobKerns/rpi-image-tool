@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DIR="$(dirname "$0")"
-export PI_INCLUDES="${DIR}/inc"
+export PI_INCLUDES="$(dirname "${DIR}")/inc"
 
 . "${PI_INCLUDES}/vars.sh"
 
