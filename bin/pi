@@ -8,7 +8,7 @@
 
 NAME="${1-pi:latest}"
 shift
-CMD="${1-bash}"
+export PI_CMD="${1-bash}"
 shift
 
-exec docker run -it --rm -v"${PWD}":/host "${NAME}" "${CMD}"  "$@"
+exec docker run -it --rm -v"${PWD}":/host "${NAME}" "${PI_CMD}"  "$@"

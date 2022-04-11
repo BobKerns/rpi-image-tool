@@ -2,7 +2,7 @@
 
 # Various utility routines. This is intended to be included in other scripts.
 
-CMD="$0"
+export PI_CMD="$0"
 export PI_INCLUDES="${PI_INCLUDES:-"$(cd "$(dirname "$0")"; pwd)"}"
 export PI_CMDS="${PI_CMDS:-"$(dirname "${PI_INCLUDES}")/cmds"}"
 DFLT_WDIR="/work"
@@ -19,6 +19,8 @@ export PI_BOOT="${PI_BOOT:-"${PI_ROOT}/boot"}"
 export PI_IMAGE_FILE=/work/image
 # Should be the same as in rpi-image-tool
 export PI_IMAGE_SRC_MOUNT="${PI_IMAGE_SRC_MOUNT-/data/image}"
+
+export PI_INVOKER_BASE="${PI_INVOKER_BASE:-"$0"}"
 
 # Our own process ID, to enable aborting on error or c-C.
 SELF=$$

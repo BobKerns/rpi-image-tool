@@ -4,7 +4,9 @@
 #### Any pending changes will be committed first.
 ####   Usage: ${PI_INVOKER}
 
-DIR="$(dirname "$(dirname "$0")")"
+set -x
+export PI_CMD="$0"
+DIR="$(dirname "$(dirname "${CMD}")")"
 export PI_INCLUDES="${DIR}/inc"
 BIN="${DIR}/bin"
 

@@ -4,8 +4,8 @@
 
 # Show usage for the current or specified command.
 usage() {
-     local cmd="$(which -- "${1-"${CMD}"}")"
-     local script="$(grep -E '^#### |^####$' "${cmd}" | sed -E -e 's/^#### ?/echo "/' -e 's/$/";/')"
+     local cmd="$(which -- "${1:-"${PI_CMD}"}")"
+     local script="$(grep -E '^#### |^####$' "${cmd:-"${PI_CMD}:}" | sed -E -e 's/^#### ?/echo "/' -e 's/$/";/')"
      if [ "${1}" = bash -o "${1}" = "/bin/bash" -o "${1}" = "$(which -- bash)" ]; then
         msg "Usage: ${PI_INVOKER_BASE} [subcmd]"
         msg "  With no arguments, invokes bash with the image filesystems mounted."
