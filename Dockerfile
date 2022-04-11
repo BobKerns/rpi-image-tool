@@ -42,6 +42,7 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 
 # Our script data is the most likely to change, and quick to load.
 COPY cmds/ /data/cmds/
+COPY inc /data/inc
 
 
 # This is the script that runs when we invoke the container. It sets up the context
