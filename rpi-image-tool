@@ -24,6 +24,8 @@ export PI_INVOKER="${PI_INVOKER_BASE} [--verbose|--debug] [--interactive] [--bui
 export PI_IMAGE_SRC_MOUNT=/data/image
 export PI_TMP=/work/tmp
 
+export PI_TERM="${TERM}"
+
 # Parse any supplied options.
 declare -a options=()
 INTERACTIVE="-i"
@@ -58,6 +60,11 @@ while [ -z "${SUBCMD}" -a ! -z "$*" ]; do
             shift
             export PI_NO_MOUNT=yes
             options+=(--nomount)
+            ;;
+        --term)
+            shift
+            export PI_TERM="${1:?}"
+            shift
             ;;
         --help|'-?')
             shift
@@ -165,7 +172,7 @@ if [ "${INTERACTIVE}" = '-it' ]; then
         "${mount_args[@]}" \
         "${export_args[@]}" \
         --tmpfs "${PI_TMP}:rw,noexec,nosuid,size=100M" \
-        "${PI_BUILDER}" "${options[@]}" "$@"
+        "${PI_BUILDER}" "${options[@]}" --term "${PI_TERM}" "$@"
 else
     # When not in interactive mode, run docker in the background so that bash
     # can handle SIGINT and stop the container.
