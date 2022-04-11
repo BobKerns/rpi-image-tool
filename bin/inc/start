@@ -31,13 +31,16 @@ while [ "${1:0:2}" = '--' ]; do
             ;;
     esac
 done
+
+export SUBCMD="${1}"
+
 set -- "${options[@]}" "$@"
 
 
 # Harmonize relative paths
 cd /data/local
 
-if [ -z "$*" ]; then
+if [ -z "${SUBCMD}" ]; then
     export PI_INVOKER="${PI_INVOKER:-"$(basename "$0")"}"
     usage "$(basename "$0")"
     exit
