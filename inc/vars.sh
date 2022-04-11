@@ -4,7 +4,7 @@
 
 CMD="$0"
 export PI_INCLUDES="${PI_INCLUDES:-"$(cd "$(dirname "$0")"; pwd)"}"
-export PI_CMDS="${PI_CMDS:-"$(dirname "${PI_INCLUDES}")"}"
+export PI_CMDS="${PI_CMDS:-"$(dirname "${PI_INCLUDES}")/cmds"}"
 DFLT_WDIR="/work"
 export PI_WORKDIR="${PI_WORKDIR:-"${DFLT_WDIR}"}"
 export PI_BUILD="${PI_BUILD:-"${PI_WORKDIR}/build"}"
