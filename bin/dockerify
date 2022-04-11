@@ -1,7 +1,12 @@
 #!/bin/bash
 
-DIR="$(dirname "$0")"
-export PI_INCLUDES="$(dirname "${DIR}")/inc"
+#### Create a docker image to run the current image file.
+#### Any pending changes will be committed first.
+####   Usage: ${PI_INVOKER}
+
+DIR="$(dirname "$(dirname "$0")")"
+export PI_INCLUDES="${DIR}/inc"
+BIN="${DIR}/bin"
 
 . "${PI_INCLUDES}/vars.sh"
 
@@ -13,4 +18,8 @@ shift
 echo "Creating docker image ${NAME} from disk image ${PI_IMAGE_FILE}"
 echo "This will take some time."
 
-"${DIR}/rpi-image-tool" export-docker - | docker import - "${NAME}" "$@"
+"${BIN}/rpi-image-tool" commit
+
+"${BIN}/rpi-image-tool" export-docker - | docker import - "${NAME}" "$@"
+
+msg "The image can be run via ${BIN}/pi ${NAME}"
