@@ -27,10 +27,11 @@ This enables workflows like this to be performed on any platform:
 
 For ease of use, this is packaged behind three front-end scripts:
 
-* `rpi-image-tool`: The main tool
-* `grow-root-fs`: Increase the size of the root filesystem
-* `dockerify`: Import a Raspery Pi boot image file as a docker container.
-* `pi`: Invoke a Raspberry Pi container.
+* [`rpi-image-tool`](bin/rpi-image-tool): The main tool
+* [`grow-root-fs`](bin/grow-root-fs): Increase the size of the root filesystem
+* [`dockerify`](bin/dockerify): Import a Rasperry Pi boot image file as a docker container.
+* [`undockerify`](bin/undockerify): Export a Rasperry Pi boot image file from a `pi` docker container
+* [`pi`](bin/pi): Invoke a Raspberry Pi container.
 
 ### rpi-image-tool
 
@@ -43,21 +44,52 @@ The command can be a local script, or it can be `bash`, `emacs`, `nano`, or `vi`
 exporation or manual modifications. These four default to `--interactive`; other interactive tools may require
 passing the `--interactive` flag explicitly.
 
-Additionally, convenience commands are provided:
+Additionally, convenience subcommands are provided:
 
-* [`blkids`](bin/blkids) — list the UUID's and labels of the partitioms and the partition map.
-* [`export-docker`](bin/export) — convert an disk image to a `.tar` file for import with `docker import`
-* [`fsck`](bin/fsck) — perform `fsck` on the image filesystems.
-* [`help`](bin/help) — Display a command's help documentation.
-* [`image`](bin/image) — Load or delete the image to be configured. This can be a `.img` file or a
+#### Data modifiers
+
+These commands queue up changed versions of files, while preserving the original for comparison or reversion.
+The image is not directly modified; the changes are not applied until the `commit` subcommand is issued.
+
+* [`add-cgroups`](cmds/add-cgroups): Add cgroups to boot/cmdline.txt
+* [`append`](cmds/append): Append data to an file in the image
+* [`appendLine`](cmds/appendLine): Append a line of text to a file in the image.
+* [`copy`](cmds/copy): Copy a file be added to the image (or to replace an existing file).
+* [`hostname`](cmds/hostname): Make the necessary changes to pre-set the hostname.
+* [`installHome`](cmds/installHome): Install a user home directory's files & set permissions.
+
+#### Partition and filesystem utilities
+
+* [`blkids`](cmds/blkids): list the UUID's and labels of the partitioms and the partition map.
+* [`fsck`](cmds/fsck): perform `fsck` on the image filesystems.
+* [`partition-size`](cmds/partition-size): Show the partition sizes, or modify the root partition size.
+
+#### Lifecycle subcommands
+
+Thse commands operate on working copy of the image stored in a docker volume
+
+* [`commit`](cmds/commit): Write pending changes to the image
+* [`create-image`](cmds/create-image): Create and populate a disk image from a tar file
+* [`export-docker`](cmds/export): convert an disk image to a `.tar` file for import with `docker import`
+* [`export-image`](cmds/export-image): Export the working image to an external `.img` or `.zip` file that
+  can be loaded to an SD card.
+* [`image`](cmds/image): Load, delete, or reset the image to be configured. This can be a `.img` file or a
   `.zip` file containing the image.
-* [`partition-size`](bin/partition-size) - Show the partition sizes, or modify the root partition size.
+
+#### Utility subcommands
+
+* [`help`](cmds/help): Display a command's help documentation.
+* [`diff`](cmds/diff): Compare pending changes to the original
+* [`msg`](cmds/msg): Display a message on stderer (used by other commands).
+
+#### User-supplied subcommands
 
 If invoked via the provided script ([`rpi-image-tool`](rpi-image-tool)), images and scripts can be
 located in the current working directory or a subdirectory.
-The script mounts this under `/data/local/`, and this becomes the current working directory inside the container,allowing relative paths to work properly. (Obviously, relative paths involvig '../' are not supported.)
+The script mounts this under `/data/local/`, and this becomes the current working directory inside the container,
+allowing relative paths to work properly. (Obviously, relative paths involvig '../' are not supported.)
 
-The `bin/` directory (`/data/local/bin`) under the working directory will be added to `$PATH`,
+The `cmds/` directory (`/data/local/cmds`) under the working directory will be added to `$PATH`,
 making scripting more convenient.
 
 If an image file has been loaded, it will be mounted at `/work/image`, and `$PI_IMAGE_FILE` will point to it.
@@ -127,20 +159,21 @@ The `rpi-image-tool` can be extended in three ways.
 They will be run in-context and can access the mounted filesystems, use the
 environment variables, and run the other subcommands directly.
 
-2) Scripts placed in a `bin/` subdirectory of the current directory will be on the `$PATH`, and thus
-can be referenced by name, without the `bin/` prefix.
+2) Scripts placed in a `cmds/` subdirectory of the current directory will be on the `$PATH`, and thus
+can be referenced by name, without the `cmds/` prefix.
 
-3) The docker container can be extended by copying additional subcommand scripts to `/data/bin`
+3) The docker container can be extended by copying additional subcommand scripts to `/data/cmds`
 in your `Dockerfile`
 
 e.g.:
 
 ```docker
 FROM rpiimagetool:latest
-COPY mybin/ /data/bin
+COPY mycmds/ /data/cmds
 ```
 
-You can build your new container image via:
+You can build your new contai
+ner image via:
 
 ```bash
 docker build --pull --rm -f Dockerfile -t myrpiimagetool:latest

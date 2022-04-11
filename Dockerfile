@@ -7,9 +7,9 @@ ARG TAG=pi:latest
 # 1) Less-frequently changed layers are placed first
 # 2) Packages downloaded by apt-get are cached
 # 3) If you are developing/debugging subcommand scripts, running in the
-#    root directory of the project will pick up changes in the bin/ subdirectory
+#    root directory of the project will pick up changes in the cmds/ subdirectory
 #    without needing to rebuild the Docker container, because we include
-#    /data/local/bin in the path, and our standard rpi-image-tool script
+#    /data/local/cmds in the path, and our standard rpi-image-tool script
 #    bind-mounts the current directory on /data/local.
 
 
@@ -31,8 +31,8 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 # Our directory structure should be fairly stable, but no need to reload emacs if it does.
 # So we put creating the directories, setting PATH, and the WORKDIR in the next 3 layers.
 VOLUME [ "/work", "/data/mnt", "/data/local"]
-RUN mkdir -p /work/build/root /work/build/root/boot /data/bin /data/local/bin /data/mnt
-ENV PATH "/data/local/bin:/data/bin:${PATH}"
+RUN mkdir -p /work/build/root /work/build/root/boot /data/cmds /data/local/cmds /data/mnt
+ENV PATH "/data/local/cmds:/data/cmds:${PATH}"
 WORKDIR /data/local
 
 # The main list of packages to be installed.
@@ -41,9 +41,9 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
     apt-get -y install git kpartx kmod multipath-tools parted errno dosfstools bc zip
 
 # Our script data is the most likely to change, and quick to load.
-COPY bin/ /data/bin/
+COPY cmds/ /data/cmds/
 
 
 # This is the script that runs when we invoke the container. It sets up the context
 # (mounts, environment variables) for the subcommand scripts, and runs them.
-ENTRYPOINT ["/data/bin/inc/start"]
+ENTRYPOINT ["/data/inc/start"]

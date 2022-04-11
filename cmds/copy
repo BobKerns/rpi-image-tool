@@ -13,9 +13,9 @@ copy() {
         echo "File ${src} does not exist." 1>&2
         exit 2
     fi
-    mkdir -p "$(dirname "${saved}")" "$(dirname "${tmp}")" "$(dirname "${pending}")" \
+    mkdir -p "$(dirname "${saved}")" "$(dirname "${pending}")" \
     && ([ -e "${saved}" ] || cp "${src}" "${saved}" ) \
-    && cat "${data}" >"${pending}"
+    && cp -pv"${data}" "${pending}"
 }
 
 copy "${1:?}"

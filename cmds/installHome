@@ -1,0 +1,26 @@
+#!/bin/bash
+
+#### Install home directory files and configure permissions.
+#### Ownership must be set in a running image once the
+####   Usage: ${PI_INVOKER} <username> [<uid>:<gid>]
+####     If supplied, <uid> and <gid> must be numeric, as name lookups would occur in the wrong envirionment.
+
+installHome() {
+    local user="${1:?}"
+    local uidgid="${2}"
+    local home="/home/${user}"
+    local src="${PI_DATA}/${home}"
+    local pending="${PENDING}/${home}"
+
+    verbose "Installing user files for ${user}"
+    cp -a "${src}" "${pending}"
+    # Include dot files and directories
+    cp -a "${src}"/.??* "${pending}"/
+    # Dot files and directories, notably .ssh, are user-private.
+    find "${pending}"/.??* -type d -exec chmod 700 {} \;
+    find "${pending}"/.??* -type f -exec chmod 600 {} \;
+    # If UID/GID are supplied, set the ownership now.
+    if [ ! -z "${uidgid}" ]; then
+        chown -Rh "${uidgid}" "${pending}"
+    fi
+}
