@@ -199,7 +199,7 @@ The scripts should follow the following format:
 
 # This sets up variables and utility shell functions, and ensures
 # that the --help, --verbose, and --debug options are handled uniformly.
-. "${PI_CMDS}/inc/vars.sh"
+. "${PI_INCLUDES}/vars.sh"
 
 echo <<EOF
 Your code here.
@@ -245,7 +245,7 @@ The following environment variables are set up prior to invoking the subcommand 
 #### In the builder
 
 * `PI_INCLUDES`
-  * The directory that holds scripts to be sourced. Currently only `vars.sh`
+  * The directory that holds scripts to be sourced.
 * `PI_CMDS`
   * The directory that contains the subcommands.
 * `PI_WORKDIR`

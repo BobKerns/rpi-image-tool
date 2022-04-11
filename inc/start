@@ -11,6 +11,7 @@
 
 export PI_INCLUDES="$(cd "$(dirname "$0")"; pwd)"
 . "${PI_INCLUDES}/vars.sh"
+. "${PI_INCLUDES}/partitions.sh"
 
 declare -a options=()
 while [ "${1:0:2}" = '--' ]; do

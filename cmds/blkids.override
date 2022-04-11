@@ -1,8 +1,5 @@
 #!/bin/bash
 
-. "${PI_CMDS}/inc/vars.sh"
-
 find_partitions
 
 export PI_NO_MOUNT=yes
-

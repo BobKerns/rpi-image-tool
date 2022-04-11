@@ -4,7 +4,7 @@
 ####   Usage: ${PI_INVOKER} fsck
 ####      Verify the paritions
 
-. "${PI_CMDS}/inc/vars.sh"
+. "${PI_INCLUDES}/vars.sh"
 
 do_delete_loop
 

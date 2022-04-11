@@ -1,0 +1,8 @@
+#!/bin/bash
+
+#### Print a debugging message, enabled with --debug.
+####   Usage: ${PI_INVOKER} <message>*
+
+. "${PI_INCLUDES}/msgs.sh"
+
+debug "$@"

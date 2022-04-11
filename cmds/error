@@ -1,0 +1,10 @@
+#!/bin/bash
+
+#### Print an error messaged. Use this to print errors in a standardized way
+#### and avoid redundant messages from the start script.
+
+####   Usage: ${PI_INVOKER} <message>*
+
+. "${PI_INCLUDES}/msgs.sh"
+
+error "$@"

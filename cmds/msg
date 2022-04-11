@@ -3,4 +3,6 @@
 #### Echo the arguments to stderr.
 ####   Usage: ${PI_INVOKER}
 
-echo "$@" 1>&2
+. "${PI_INCLUDES}/msgs.sh"
+
+msg "$@"

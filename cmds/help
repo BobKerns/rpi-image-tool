@@ -16,7 +16,7 @@ case "${SUBCMD}" in
         ;;
 esac
 
-. "${PI_CMDS}/inc/vars.sh"
+. "${PI_INCLUDES}/vars.sh"
 
 # Discard the 'help' subcommand so we are documenting the actual command.
 export PI_INVOKER_BASE="${PI_INVOKER_BASE_1}"
