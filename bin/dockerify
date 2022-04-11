@@ -1,6 +1,10 @@
 #!/bin/bash
 
 DIR="$(dirname "$0")"
+export PI_INCLUDES="${DIR}/inc"
+
+. "${PI_INCLUDES}/vars.sh"
+
 PI_IMAGE_FILE="$1"
 shift
 NAME="${1-pi:latest}"
