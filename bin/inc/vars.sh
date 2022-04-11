@@ -281,10 +281,6 @@ while [ "${1:0:2}" = '--' ]; do
     esac
 done
 
-if [ ! -z "${PI_TERM}" ]; then
-    export TERM="${PI_TERM}"
-fi
-
 # Look ahead for --help and handle it here.
 declare -a suboptions=()
 subcmd="$1"

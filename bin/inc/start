@@ -32,6 +32,11 @@ while [ "${1:0:2}" = '--' ]; do
     esac
 done
 
+if [ ! -z "${PI_TERM}" ]; then
+    export TERM="${PI_TERM}"
+    eval "$(tset -s)"
+fi
+
 export SUBCMD="${1}"
 
 set -- "${options[@]}" "$@"
