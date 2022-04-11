@@ -1,0 +1,25 @@
+#!/bin/bash
+
+#### Export the current image as a Raspbery Pi image file.
+#### Usage: ${PI_INVOKER} <.img file>|<.zip file>|'-'
+
+IMG="${1:?}"
+IMGDIR="$(dirname "${PI_IMAGE_SRC_MOUNT}")"
+IMGNAME="$(basename "$(basename "${IMG}" .img)" .zip)"
+
+if [ "${IMG: -4}" = '.zip' ]; then
+    pushd "${IMGDIR}"
+    if [ "${IMGNAME}" != "$(basename "${PI_IMAGE_FILE}")" ]; then
+        ln "${PI_IMAGE_FILE}" "${IMGNAME}"
+        zip "${PI_IMAGE_SRC_MOUNT}" "${IMGNAME}"
+        rm "${IMGNAME}"
+    else
+        zip "${PI_IMAGE_SRC_MOUNT}" "${IMGNAME}"
+    fi
+    popd
+    dd status=progress flags=sync "${PI_IMAGE_FILE}.zip" "${PI_IMAGE_ARG}"
+elif [ "${PI_IMAGE_ARG}" = '-' ]; then
+    dd status=progress flags=sync if="${PI_IMAGE_FILE}" bs=512
+else
+    dd status=progress flags=sync if="${PI_IMAGE_FILE}" bs=512 of="${PI_IMAGE_SRC_MOUNT}"
+fi

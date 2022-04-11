@@ -1,0 +1,30 @@
+#!/bin/bash
+
+#### Load file data from a .tar, .tar.gz, .tgz, or .zip file, into new partitions on a new image file.
+
+# Size of boot partition in sectors
+BOOT_SIZE=${1:?}
+shift
+# Size of root partition in sectors
+ROOT_SIZE=${1:?}
+shift
+INPUT_FILE="${1:?}"
+shift
+
+# We have to allow for the size of the disk label
+LABEL=SIZE=$(( 8192))
+
+DISK_SIZE=$(( LABEL_SIZE + BOOT_SIZE + ROOT_SIZE ))
+
+image --clear
+
+dd oflags=nocreat status=progress bs=512 count=$(( DISK_SIZE )) if=/dev/zero of="${PI_IMAGE_FILE}"
+
+# TODO: Still need to create disk label
+
+# TODO: Initialize the filesystems
+
+# TODO: Mount the filesystems
+
+# TODO: Untar the files into the filesystem
+

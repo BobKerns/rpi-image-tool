@@ -76,10 +76,11 @@ while [ -z "${SUBCMD}" -a ! -z "$*" ]; do
             export PI_INVOKER="$(basename "$0")"
             SUBCMD=help
             ;;
-        image)
+        image|export-image|create-image)
+            SUBCMD="$1"
             # We need to mount the image file
-            PI_IMAGE_ARG="$2"
-            SUBCMD=image
+            export PI_IMAGE_ARG="$2"
+            export PI_IMAGE_SRC_MOUNT="/data/$(basename "${PI_IMAGE_ARG}")"
             ;;
         *)
             SUBCMD="$1"
@@ -144,7 +145,7 @@ mount_args=(
 )
 export_args=()
 
-if [ ! -z "${PI_IMAGE_ARG}" -a -r "${PI_IMAGE_ARG}" ]; then
+if [ "${PI_IMAGE_ARG}" != '-' -a ! -z "${PI_IMAGE_ARG}" -a -r "${PI_IMAGE_ARG}" ]; then
     export PI_IMAGE_USER_ABSOLUTE="$(abspath "${PI_IMAGE_ARG}")"
     mounts+=(type=bind,source="${PI_IMAGE_USER_ABSOLUTE},target=${PI_IMAGE_SRC_MOUNT}")
     exports+=(PI_IMAGE_USER_ABSOLUTE PI_IMAGE_SRC_MOUNT)

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+DIR="$(dirname "$0")"
+
+BOOTSIZE=${1:?}
+shift
+ROOTSIZE=${1:?}
+shift
+NAME="${1-pi:latest}"
+shift
+IMAGE_FILE="${1:?}"
+shift
+
+echo "Creating Raspberry Pi image ${PI_IMAGE_FILE} from docker container ${name}"
+echo "This will take some time."
+
+docker image export "${NAME}" - | docker create-image "${BOOTSIZE}" "${ROOTSIZE}" "${IMAGE_FILE}"
