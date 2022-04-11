@@ -178,7 +178,7 @@ GROWTH=$(( NEWDISKSIZE - FILESIZE ))
 verbose GROWTH="${GROWTH}" bytes, $(( GROWTH / 512 )) sectors
 
 if (( GROWTH >= 0 )); then
-    dd if=/dev/zero of="${PI_IMAGE_FILE}" bs=512 count=$(( GROWTH / 512 )) oflag=append conv=notrunc,nocreat seek=${FILEBLKS}
+    dd if=/dev/zero of="${PI_IMAGE_FILE}" bs=512 count=$(( GROWTH / 512 )) status=progress oflag=append conv=notrunc,nocreat seek=${FILEBLKS}
 fi
 
 # Close and reacquire the partitions.
