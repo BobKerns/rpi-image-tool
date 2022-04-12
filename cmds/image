@@ -90,6 +90,7 @@ while [ "${1:0:2}" = '--' ]; do
             ;;
         --require)
             [ -r "${PI_IMAGE_FILE}" ] || error "No image file is active."
+            exit 0
             ;;
         --test)
             [ -r "${PI_IMAGE_FILE}" ] || exit 126
