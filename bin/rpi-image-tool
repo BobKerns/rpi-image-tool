@@ -124,7 +124,7 @@ export PI_USER_IMAGE_FILE="${PI_IMAGE_ARG}"
 export PI_USER_CWD="$(pwd)"
 export PI_USER_NAME="$(whoami)"
 export PI_VOLUME="pi-image-tool-vol_${PI_VOLUME_SUFFIX}"
-export PI_HOST="${PI_HOST:?"$(pwd)"}"
+export PI_HOST="${PI_HOST:-"$(pwd)"}"
 
 declare -a mounts exports mount_args export_args
 mounts=()
