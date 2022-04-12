@@ -20,6 +20,7 @@ echo "This will take some time."
 
 "${BIN}/rpi-image-tool" commit
 
+msg "Exporting files and importing into docker container ${NAME}"
 "${BIN}/rpi-image-tool" export-docker - | docker import - "${NAME}" "$@"
 
 msg "The image can be run via ${BIN}/pi ${NAME}"
