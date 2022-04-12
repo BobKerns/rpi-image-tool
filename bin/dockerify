@@ -2,7 +2,8 @@
 
 #### Create a docker image to run the current image file.
 #### Any pending changes will be committed first.
-####   Usage: ${PI_INVOKER}
+####   Usage: ${PI_INVOKER} [<imageName>]
+####     The default for <imageName> is pi:latest
 
 export PI_CMD="$0"
 DIR="$(dirname "$(dirname "${PI_CMD}")")"
@@ -11,12 +12,10 @@ BIN="${DIR}/bin"
 
 . "${PI_INCLUDES}/vars.sh"
 
-PI_IMAGE_FILE="$1"
-shift
 NAME="${1-pi:latest}"
 shift
 
-echo "Creating docker image ${NAME} from disk image ${PI_IMAGE_FILE}"
+echo "Creating docker image ${NAME} from the current disk image"
 echo "This will take some time."
 
 "${BIN}/rpi-image-tool" commit

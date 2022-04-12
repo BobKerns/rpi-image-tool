@@ -112,11 +112,12 @@ To create a Raspberry Pi OS docker image, we need to convert a Raspberry Pi OS D
 to a docker image with the `dockerify` command:
 
 ```bash
-rpi-image-tool 2021-10-30-raspios-bullseye-arm64.img dockerify - \
+rpi-image-tool import 2021-10-30-raspios-bullseye-arm64.img;
+rpi-image-tool dockerify - \
 | docker import - myacct/raspios:bullseye
 ```
 
-This is packaged in the [`dockerify`](dockerify) script:
+The latter two steps are packaged in the [`dockerify`](dockerify) script:
 
 ```bash
 ./dockerify 2021-10-30-raspios-bullseye-arm64.img myacct/pi:bullseye
