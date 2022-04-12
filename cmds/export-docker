@@ -16,7 +16,11 @@ EXCLUDE=(
     "var/run"
     "var/lock"
     "var/spool"
-    "var/cache"
+    "var/cache/ldconfig/*"
+    "var/cache/debconf/*"
+    "var/cache/fontconfig/*"
+    "var/cache/private/*"
+    "var/cache/man/*"
     "lost+found"
     )
 EXCLUDES=()
