@@ -22,7 +22,7 @@ export PI_INVOKER_BASE="$(basename -a "$0")"
 export PI_INVOKER="${PI_INVOKER_BASE} [--verbose|--debug] [--interactive] [--builder scriptname] [--volume volname]"
 # Should be the same as in vars.sh
 export PI_IMAGE_SRC_MOUNT=/data/image
-export PI_TMP=/work/tmp
+export PI_TMP=/data/tmp
 
 export PI_TERM="${TERM}"
 

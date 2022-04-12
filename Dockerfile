@@ -30,8 +30,8 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 
 # Our directory structure should be fairly stable, but no need to reload emacs if it does.
 # So we put creating the directories, setting PATH, and the WORKDIR in the next 3 layers.
-VOLUME [ "/work", "/data/mnt", "/data/host"]
-RUN mkdir -p /work/build/root /work/build/root/boot /data/cmds /data/host/cmds /data/mnt
+VOLUME [ "/work", "/data/mnt", "/data/tmp", "/data/host"]
+RUN mkdir -p /work/build/root /work/build/root/boot /data/cmds /data/host/cmds /data/tmp /data/mnt
 ENV PATH "/data/host/cmds:/data/cmds:${PATH}"
 WORKDIR /data/host
 
