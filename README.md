@@ -133,7 +133,7 @@ This optionally takes a command and arguments; this defaults `bash`.
 
 The image name defaults to `pi:latest`
 
-The current directory is mounted in the image as `/host` to make it easy to transfer files, etc.
+The current directory is mounted in the image as `/data/local` to make it easy to transfer files, etc.
 
 On exiting, the container will be deleted. Other behaviors can be had by invoking `docker run` directly,
 omitting the `--rm` option.
@@ -255,8 +255,9 @@ The following environment variables are set up prior to invoking the subcommand 
   * A directory for storing values to be stored into the image
 * `PI_TMP`
   * A temporary directory
-* `PI_DATA`
-  * The `data/` subdirectory on the host, conventional place to load data to install
+* `PI_HOST`
+  * The current working directory on the host. Paths to load will be relative to this. This can be set in the
+    host environment to pin it to a directory independently of the working directory.
 * `PI_SAVED`
   * The `saved/` subdirectory on the host, where unmodified copies of files to be modified are placed.
 * `PI_ROOT`

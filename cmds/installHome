@@ -9,7 +9,7 @@ installHome() {
     local user="${1:?}"
     local uidgid="${2}"
     local home="/home/${user}"
-    local src="${PI_DATA}/${home}"
+    local src="${PI_HOST}/${home}"
     local pending="${PENDING}/${home}"
 
     verbose "Installing user files for ${user}"

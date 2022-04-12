@@ -10,7 +10,7 @@ appendLine() {
 
 append() {
     local src="${PI_ROOT:?}/${1:?}"
-    local data="${PI_DATA:?}/{$1:?}"
+    local data="${PI_LOCAL:?}/{$1:?}"
     local saved="${PI_SAVED:?}/${1:?}"
     local pending="${PI_PENDING:?}/${1:?}"
     if [ ! -r "${src}" ]; then

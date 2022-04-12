@@ -9,7 +9,7 @@ DFLT_WDIR="/work"
 export PI_WORKDIR="${PI_WORKDIR:-"${DFLT_WDIR}"}"
 export PI_BUILD="${PI_BUILD:-"${PI_WORKDIR}/build"}"
 export PI_TMP="${PI_TMP:-"${PI_WORKDIR}/tmp"}"
-export PI_DATA="${PI_DATA:-"/data/local"}"
+export PI_HOST="${PI_HOST:-"/data/local"}"
 export PI_SAVED="${PI_SAVED:-"${PI_WORKDIR}/saved"}"
 export PI_PENDING="${PI_PENDING:-"${PI_WORKDIR}/pending"}"
 
