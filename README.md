@@ -86,10 +86,10 @@ Thse commands operate on working copy of the image stored in a docker volume
 
 If invoked via the provided script ([`rpi-image-tool`](rpi-image-tool)), images and scripts can be
 located in the current working directory or a subdirectory.
-The script mounts this under `/data/local/`, and this becomes the current working directory inside the container,
+The script mounts this under `/data/host/`, and this becomes the current working directory inside the container,
 allowing relative paths to work properly. (Obviously, relative paths involvig '../' are not supported.)
 
-The `cmds/` directory (`/data/local/cmds`) under the working directory will be added to `$PATH`,
+The `cmds/` directory (`/data/host/cmds`) under the working directory will be added to `$PATH`,
 making scripting more convenient.
 
 If an image file has been loaded, it will be mounted at `/work/image`, and `$PI_IMAGE_FILE` will point to it.
@@ -139,7 +139,7 @@ pi
 
 will drop you into a bash prompt running Raspberry Pi OS.
 
-The current directory is mounted in the image as `/data/local` to make it easy to transfer files, etc.
+The current directory is mounted in the image as `/data/host` to make it easy to transfer files, etc.
 
 On exiting, the container will be deleted. Other behaviors can be had by invoking `docker run` directly,
 omitting the `--rm` option.
@@ -261,7 +261,7 @@ The following environment variables are set up prior to invoking the subcommand 
   * A directory for storing values to be stored into the image
 * `PI_TMP`
   * A temporary directory
-* `PI_HOST`
+* `PI_HOST_DIR`
   * The current working directory on the host. Paths to load will be relative to this. This can be set in the
     host environment to pin it to a directory independently of the working directory.
 * `PI_SAVED`

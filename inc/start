@@ -44,7 +44,7 @@ set -- "${options[@]}" "$@"
 
 
 # Harmonize relative paths
-cd /data/local
+cd /data/host
 
 if [ -z "${SUBCMD}" ]; then
     export PI_INVOKER="${PI_INVOKER:-"$(basename "$0")"}"
@@ -62,8 +62,8 @@ target="$(enable -n export; enable -n help; which -- "$1")"
 
 if [ -f "${target}.override" ]; then
     . "${target}.override"
-elif [ -f "/data/local/$1.override" ]; then
-    . "/data/local/$1.override"
+elif [ -f "/data/host/$1.override" ]; then
+    . "/data/host/$1.override"
 elif [ -f "/data/bin/$1.override" ]; then
     . "/data/bin/$1.override"
 fi
