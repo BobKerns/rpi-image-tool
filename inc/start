@@ -47,8 +47,8 @@ set -- "${options[@]}" "$@"
 cd /data/host
 
 if [ -z "${SUBCMD}" ]; then
-    export PI_INVOKER="${PI_INVOKER:-"$(basename "$0")"}"
-    usage "$(basename "$0")"
+    export PI_INVOKER="${PI_INVOKER:-"$(basename -a "$0")"}"
+    usage "$(basename -a "$0")"
     exit
 else
     export PI_INVOKER="${PI_INVOKER} ${1}"

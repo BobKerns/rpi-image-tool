@@ -8,7 +8,7 @@ abspath() {
     if [[ -d "$1" ]]; then
         (cd "$1"; pwd)
     else
-        (cd "$(dirname "$1")"; echo "$(pwd)/$(basename "$1")")
+        (cd "$(dirname "$1")"; echo "$(pwd)/$(basename -a "$1")")
     fi
 }
 
@@ -18,7 +18,7 @@ export PI_BUILDER=${PI_BUILDER:-"${DFLT_BUILDER}"}
 
 export PI_VOLUME_SUFFIX=default
 
-export PI_INVOKER_BASE="$(basename "$0")"
+export PI_INVOKER_BASE="$(basename -a "$0")"
 export PI_INVOKER="${PI_INVOKER_BASE} [--verbose|--debug] [--interactive] [--builder scriptname] [--volume volname]"
 # Should be the same as in vars.sh
 export PI_IMAGE_SRC_MOUNT=/data/image
@@ -69,18 +69,24 @@ while [ -z "${SUBCMD}" -a ! -z "$*" ]; do
         --help|'-?')
             shift
             options+=(--help)
-            export PI_INVOKER="$(basename "$0")"
+            export PI_INVOKER="$(basename -a "$0")"
             SUBCMD=help
             ;;
         help)
-            export PI_INVOKER="$(basename "$0")"
+            export PI_INVOKER="$(basename -a "$0")"
             SUBCMD=help
             ;;
         image|export-image|create-image)
             SUBCMD="$1"
-            # We need to mount the image file
-            export PI_IMAGE_ARG="$2"
-            export PI_IMAGE_SRC_MOUNT="/data/$(basename "${PI_IMAGE_ARG}")"
+            case "$2" in
+                --require|--test|--clean|--clear|--reset|'')
+                ;;
+            *)
+                # We need to mount the image file
+                export PI_IMAGE_ARG="$2"
+                export PI_IMAGE_SRC_MOUNT="/data/$(basename -a "${PI_IMAGE_ARG}")"
+                ;;
+            esac
             ;;
         *)
             SUBCMD="$1"

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #### List identifying info about an image and its partitions
-#### Usage ${PI_INVOKER} $(basename "$0")
+#### Usage ${PI_INVOKER}
 
 blkid "${PI_LOOPDEV}"
 blkid "${PI_BOOTDEV}"

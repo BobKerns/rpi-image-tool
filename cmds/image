@@ -88,6 +88,13 @@ while [ "${1:0:2}" = '--' ]; do
             reset
             exit
             ;;
+        --require)
+            [ -r "${PI_IMAGE_FILE}" ] || error "No image file is active."
+            ;;
+        --test)
+            [ -r "${PI_IMAGE_FILE}" ] || exit 126
+            exit 0
+            ;;
         *)
             shift
             usage

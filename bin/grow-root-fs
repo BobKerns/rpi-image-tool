@@ -12,7 +12,7 @@ PI_BASE="$(dirname "${PI_INVOKER}")"
 
 
 
-export PI_INVOKER="$(basename "$0")"
+export PI_INVOKER="$(basename -a "$0")"
 
 # Parse any supplied options.
 while [ -z "${SUBCMD}" -a ! -z "$*" ]; do

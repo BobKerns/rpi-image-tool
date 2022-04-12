@@ -8,7 +8,7 @@ SUBCMD="$1"
 case "${SUBCMD}" in
     --help|'-?'|'')
         (
-            echo "Usage ${PI_INVOKER} $(basename "$0") <cmd>"
+            echo "Usage ${PI_INVOKER} $(basename -a "$0") <cmd>"
             echo "Commands: "
             find "${PI_CMDS}" -type f -maxdepth 1 -printf '  %f\n'
         )1>&2
@@ -25,7 +25,7 @@ export PI_INVOKER="${PI_INVOKER_BASE} ${SUBCMD}"
 T="$(type -t "${SUBCMD}")"
 case "${T}" in
     file)
-        if [ -r "${PI_CMDS}/$(basename "${SUBCMD}")" ]; then
+        if [ -r "${PI_CMDS}/$(basename -a "${SUBCMD}")" ]; then
             usage "${PI_CMDS}/${SUBCMD}"
             exit 0
         elif [ ! -z "$(which "${SUBCMD}")" ]; then

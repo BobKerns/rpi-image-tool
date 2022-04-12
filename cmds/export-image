@@ -5,11 +5,11 @@
 
 IMG="${1:?}"
 IMGDIR="$(dirname "${PI_IMAGE_SRC_MOUNT}")"
-IMGNAME="$(basename "$(basename "${IMG}" .img)" .zip)"
+IMGNAME="$(basename -a "$(basename -a "${IMG}" .img)" .zip)"
 
 if [ "${IMG: -4}" = '.zip' ]; then
     pushd "${IMGDIR}"
-    if [ "${IMGNAME}" != "$(basename "${PI_IMAGE_FILE}")" ]; then
+    if [ "${IMGNAME}" != "$(basename -a "${PI_IMAGE_FILE}")" ]; then
         ln "${PI_IMAGE_FILE}" "${IMGNAME}"
         zip "${PI_IMAGE_SRC_MOUNT}" "${IMGNAME}"
         rm "${IMGNAME}"

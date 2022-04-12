@@ -188,7 +188,7 @@ partprobe "${PI_LOOPDEV}"
 
 debug nsize=$(( $(stat --printf=%s "${PI_IMAGE_FILE}") / 512 ))
 
-PARTBASE="/dev/$(basename "${PI_LOOPDEV}")p"
+PARTBASE="/dev/$(basename -a "${PI_LOOPDEV}")p"
 NEWPART="label: dos
 label-id: ${LABELID}
 device: ${PI_LOOPDEV}
