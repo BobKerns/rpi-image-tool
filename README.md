@@ -131,7 +131,13 @@ The resulting image can be run with the `pi` comamand:
 
 This optionally takes a command and arguments; this defaults `bash`.
 
-The image name defaults to `pi:latest`
+The image name defaults to `pi:latest`. Thus,
+
+```bash
+pi
+```
+
+will drop you into a bash prompt running Raspberry Pi OS.
 
 The current directory is mounted in the image as `/data/local` to make it easy to transfer files, etc.
 
