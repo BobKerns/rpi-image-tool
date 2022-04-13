@@ -63,4 +63,4 @@ expand_fs() {
     fi
 }
 
-expand_partition && expand_fs
+expand_partition "$@" && expand_fs
