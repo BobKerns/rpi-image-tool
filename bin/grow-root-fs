@@ -15,7 +15,7 @@ PI_BASE="$(dirname "${PI_INVOKER}")"
 export PI_INVOKER="$(basename -a "$0")"
 
 # Parse any supplied options.
-while [ -z "${SUBCMD}" -a ! -z "$*" ]; do
+while [ "${1: 0-2}" = '--' ]; do
     opt="$1"
     shift
     # Scan for options to pass on
@@ -42,8 +42,12 @@ while [ -z "${SUBCMD}" -a ! -z "$*" ]; do
             eval "${script}" 1>&2
             exit 0
             ;;
+        --*)
+            echo "Unrecognized option: ${cmd}" 1>&2
+            exit 1
+            ;;
         *)
-            SUBCMD="$1"
+            set -- "${opt}" "$@"
             ;;
         esac
 done
@@ -55,7 +59,7 @@ expand_partition() {
 expand_fs() {
     local subcmd="$(echo "${SUBCMD:-show}" | tr a-z A-Z)"
     if [ "${subcmd}" != 'SHOW' ]; then
-        "${PI_BASE}"/rpi-image-tool "${options[@]}" partition-size  expandfs
+        "${PI_BASE}"/rpi-image-tool "${options[@]}" partition-size expandfs
     fi
 }
 
