@@ -21,6 +21,6 @@ echo "This will take some time."
 "${BIN}/rpi-image-tool" commit
 
 msg "Exporting files and importing into docker container ${NAME}"
-"${BIN}/rpi-image-tool" export-docker - | docker import - "${NAME}" "$@"
+"${BIN}/rpi-image-tool" export-docker - | docker import - "${NAME}" "$@" || error "Export failed." || exit
 
 msg "The image can be run via ${BIN}/pi ${NAME}"
