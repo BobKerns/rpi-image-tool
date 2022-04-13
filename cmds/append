@@ -10,6 +10,7 @@ appendLine() {
 
 append() {
     local src="${PI_ROOT:?}/${1:?}"
+    local data="${PI_HOST_DIR}/${1:?}"
     local saved="${PI_SAVED:?}/${1:?}"
     local pending="${PI_PENDING:?}/${1:?}"
     if [ ! -r "${src}" ]; then
@@ -23,4 +24,4 @@ append() {
     && cat "${data}" >>"${pending}"
 }
 
-append "${1:?}"
+append "${1:?No data file supplied.}"

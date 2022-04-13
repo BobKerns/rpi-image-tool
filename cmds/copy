@@ -15,7 +15,7 @@ copy() {
     fi
     mkdir -p "$(dirname "${saved}")" "$(dirname "${pending}")" \
     && ([ -e "${saved}" ] || cp "${src}" "${saved}" ) \
-    && cp -pv"${data}" "${pending}"
+    && cp -pv "${data}" "${pending}"
 }
 
-copy "${1:?}"
+copy "${1:?No data file supplied}"
