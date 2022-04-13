@@ -38,7 +38,7 @@ install_image() {
         msg "No image file supplied."
         usage
     fi
-    rm -rf "${PI_TMP}" "${PI_SAVED}" "${PI_PENDING}"
+    rm -rf "${PI_TMP}/*" "${PI_SAVED}" "${PI_PENDING}"
     mkdir -p "${PI_TMP}" "${PI_SAVED}" "${PI_PENDING}"
     local ext="${PI_USER_IMAGE_FILE: -4}"
     trap cleanup EXIT

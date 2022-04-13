@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #### Append a file from or source data to a file in the image.
-#### Result will be placed in the \${PI_TMP} directory for later installation.
+#### Result will be placed in the \${PI_PENDING} directory for later installation.
 ####   Usage: ${PI_INVOKER} <src> <dest>
 
 appendLine() {
