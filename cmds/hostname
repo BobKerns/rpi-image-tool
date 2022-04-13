@@ -6,6 +6,6 @@
 
 hostname="${1:?}"
 msg "Setting hostname to ${hostname,,}"
+mkdir -p "${PI_PENDING}/etc"
 echo "${hostname,,}" >"${PI_PENDING}/etc/hostname"
-cp -p "${PI_"
 printf "127.0.0.1\t${hostname}" >>/etc/hosts
