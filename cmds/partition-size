@@ -12,6 +12,7 @@
 #### The defauilt units is K (1024 bytes).
 
 . "${PI_INCLUDES}/vars.sh"
+. "${PI_INCLUDES}/partitions.sh"
 
 find_partitions
 
