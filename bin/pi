@@ -11,4 +11,4 @@ shift
 export PI_CMD="${1-bash}"
 shift
 
-exec docker run -it --rm -v"${PWD}":/host "${NAME}" "${PI_CMD}"  "$@"
+exec docker run -it --rm -v"${PWD}":/data/host "${NAME}" "${PI_CMD}"  "$@"
