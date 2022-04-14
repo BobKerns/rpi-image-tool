@@ -1,14 +1,37 @@
 #!/bin/bash
 # Boot a pi image into a temporary container for inspection.
+# Usage: pi [--default|--nodefault] [docker option]* <image> <cmd> <args>*
+# --nodefault suppresses our default docker options
 # Arg 1: image to run. Default: pi:latest
 # Arg 2: Command to run. Default: bash
 # Arg 3-n: Additonal args passed.
 
-# The current working directory is mounted on /host
+# The current working directory is mounted on /host, and made the working directory.
+# This is done even if --nodefault is specified. (Otherwise, you could just use the
+# docker command directly!)
+
+# Default options for docker
+
+declare -a options=( -it --rm )
+declare -a defaults=()
+while [ "${1:2}" = '--' ]; do
+    case "${1}" in
+        --nodefault)
+            defaults=()
+            ;;
+        --default)
+            defaults=( -it --rm )
+            ;;
+        *)
+            options+=( "$1 ")
+            ;;
+    esac
+    shift
+done
 
 NAME="${1-pi:latest}"
 shift
 export PI_CMD="${1-bash}"
 shift
 
-exec docker run -it --rm -v"${PWD}":/data/host --workdir=/data/host "${NAME}" "${PI_CMD}"  "$@"
+exec docker run "${defaults[@]}" "${options[@]}" -v"${PWD}":/host --workdir=/host "${NAME}" "bash" -c "${PI_CMD}" "${PI_CMD}"  "$@"

@@ -123,7 +123,7 @@ The latter two steps are packaged in the [`dockerify`](dockerify) script:
 ./dockerify 2021-10-30-raspios-bullseye-arm64.img myacct/pi:bullseye
 ```
 
-The resulting image can be run with the `pi` comamand:
+The resulting image can be conveniently run with the `pi` comamand:
 
 ```bash
 ./pi myacct/pi:bullseye
@@ -139,10 +139,14 @@ pi
 
 will drop you into a bash prompt running Raspberry Pi OS.
 
-The current directory is mounted in the image as `/data/host` to make it easy to transfer files, etc.
+The current directory is mounted in the image as `/host` and made the current directory,
+making it easy to transfer files, etc.
 
-On exiting, the container will be deleted. Other behaviors can be had by invoking `docker run` directly,
-omitting the `--rm` option.
+By default, the `--rm` and `-it` options are supplied, making it an interactive, temporary container instance.
+This means that on exiting, the container will be deleted. Supplying `--nodefault` will suppress these, while `--default` will reinstate them. The current directory will still be mapped to `/host`.
+
+Other behaviors can be had by invoking `docker run` directly; this command exists for convenience, and the
+Raspberry Pi OS image can be run with no special considerations.
 
 ### Scripting
 
