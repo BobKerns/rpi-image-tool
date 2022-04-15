@@ -14,7 +14,7 @@
 
 declare -a options=( -it --rm )
 declare -a defaults=()
-while [ "${1:2}" = '--' ]; do
+while [ "${1:0:2}" = '--' ]; do
     case "${1}" in
         --nodefault)
             defaults=()
