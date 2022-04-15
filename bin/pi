@@ -23,7 +23,7 @@ while [ "${1:0:2}" = '--' ]; do
             defaults=( -it --rm )
             ;;
         *)
-            options+=( "$1 ")
+            options+=( "{$1} ")
             ;;
     esac
     shift

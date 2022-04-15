@@ -167,6 +167,7 @@ for i in  "${exports[@]}"; do
 done
 
 CIDFILE="/tmp/$$.cid"
+trap "rm -f '${PI_CONTAINER}' 2>/dev/null" exit
 killContainer() {
     local CID="$(cat "${CIDFILE}")"
     rm "${CIDFILE}"
