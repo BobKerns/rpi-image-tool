@@ -133,7 +133,9 @@ expandfs() {
     resize2fs -fp "$1"
 
     ## Sanity check after we modify
-    do_fsck
+    do_fsck || error "FSCK failed" || exit 126
+    msg "The root file system has been expanded to fill the partition."
+    msg "New root size=$(dspace $(( NEWSIZE )))"
 }
 
 show_status() {
