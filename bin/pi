@@ -14,13 +14,23 @@
 
 declare -a options=( -it --rm )
 declare -a defaults=()
-while [ "${1:0:2}" = '--' ]; do
+while [ "${1:0:2}" = '-' ]; do
     case "${1}" in
         --nodefault)
             defaults=()
             ;;
         --default)
             defaults=( -it --rm )
+            ;;
+        # Options appearing as --option value (w/o =) in the documentation.
+        --cidfile|--name|--network|-a|--attach|-w|--workdir\
+        |--storage-opt|--tmpfs|-v|--volume|--mount|-p|--tmpfs\
+        |--expose|-e|--env|--envfile|-l|--label|--label-file\
+        |--volumes-from|--gpus|--ulimit\
+        |--isolation|--security-opt|-stop-timeout|--stop-signal\
+        |--sysctl)
+            options+= ( "${1}" "${2}" )
+            shift
             ;;
         *)
             options+=( "${1} ")
