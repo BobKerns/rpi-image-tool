@@ -14,4 +14,4 @@ shift
 echo "Creating Raspberry Pi image ${PI_IMAGE_FILE} from docker container ${name}"
 echo "This will take some time."
 
-docker image export "${NAME}" - | rpi-build-tool create-image "${BOOTSIZE}" "${ROOTSIZE}" "${IMAGE_FILE}"
+docker image export "${NAME}" - | rpi-image-tool create-image "${BOOTSIZE}" "${ROOTSIZE}" "${IMAGE_FILE}"
