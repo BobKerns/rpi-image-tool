@@ -22,6 +22,7 @@ EXCLUDE=(
     "var/cache/private/*"
     "var/cache/man/*"
     "lost+found"
+    "etc/fstab"
     )
 EXCLUDES=()
 for E in "${EXCLUDE[@]}"; do
