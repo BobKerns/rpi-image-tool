@@ -2,13 +2,13 @@
 
 DIR="$(dirname "$0")"
 
-BOOTSIZE=${1:?}
+BOOTSIZE=${1:?Boot size}
 shift
-ROOTSIZE=${1:?}
+ROOTSIZE=${1:?Root size}
 shift
 NAME="${1-pi:latest}"
 shift
-IMAGE_FILE="${1:?}"
+IMAGE_FILE="${1}"
 shift
 
 echo "Creating Raspberry Pi image ${PI_IMAGE_FILE} from docker container ${name}"
