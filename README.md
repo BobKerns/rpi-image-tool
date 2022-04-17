@@ -164,5 +164,5 @@ friendly for use in scripts itself, perhaps as step near the end of a larger bui
 
 ## Additional Resources
 
-* [Extending the Rasperry Pi OS Image Tool](extending.md)
+* [Extending the Rasperry Pi OS Image Tool](doc/extending.md)
 * [Non-Raspberry Pi OS images](doc/non-raspos.md)
