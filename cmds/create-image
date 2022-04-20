@@ -3,6 +3,7 @@
 #### Load file data from a .tar, .tar.gz, .tgz, or .zip file, into new partitions on a new image file.
 #### Usage:
 ####   ${PI_INVOKER} [--label <label>] [--boot-label <label>] [--root-uuid <uuid>] bootsize rootsize [inputfile]
+####      bootsize and rootsize are in MiB
 ####      inputfile defaults to -, meaning standard input. It can also be '', meaning skip loading files.
 
 . "${PI_INCLUDES}/vars.sh"
@@ -38,11 +39,11 @@ while [ "${1:0:2}" = '--' ]; do
 done
 
 
-# Size of boot partition in sectors
-BOOT_SIZE="${1:?Boot size}"
+# Size of boot partition in MiB
+BOOT_SIZE=$(( ${1:?Boot size} * 2 * 1024 ))
 shift
-# Size of root partition in sectors
-ROOT_SIZE="${1:?Root size}"
+# Size of root partition in MiB
+ROOT_SIZE=$(( ${1:?Root size} * 2 * 1024 ))
 shift
 INPUT_FILE="${1--}"
 shift
