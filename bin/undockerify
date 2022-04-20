@@ -2,16 +2,10 @@
 
 DIR="$(dirname "$0")"
 
-BOOTSIZE=${1:?Boot size}
-shift
-ROOTSIZE=${1:?Root size}
-shift
 NAME="${1-pi:latest}"
 shift
-IMAGE_FILE="${1}"
-shift
 
-echo "Creating Raspberry Pi image ${PI_IMAGE_FILE} from docker container ${name}"
+echo "Creating Raspberry Pi image ${PI_IMAGE_FILE} from docker container ${NAME}"
 echo "This will take some time."
 
-docker image export "${NAME}" - | rpi-image-tool create-image "${BOOTSIZE}" "${ROOTSIZE}" "${IMAGE_FILE}"
+docker image export "${NAME}" - | rpi-image-tool create-image "${@}"
