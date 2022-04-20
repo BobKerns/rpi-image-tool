@@ -45,10 +45,19 @@ debug() {
 }
 
 # Print an error message and exit.
+# Usage:
+#   error This is an error message
+#   error 2 -- This is an error message and exits with return code 2.
 error() {
+    local code=126
+    if [ "${2}" = '--' ]; then
+        code="${1}"
+        shift
+        shift
+    fi
     msg ERROR: "$@"
     # We suppress decoding exit code 126, since we've already logged an error message.
-    exit 126
+    exit $(( code ))
 }
 
 # Format disk space numbers in a human-friendly way.
