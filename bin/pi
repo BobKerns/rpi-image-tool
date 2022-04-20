@@ -29,7 +29,7 @@ while [ "${1:0:1}" = '-' ]; do
         |--volumes-from|--gpus|--ulimit\
         |--isolation|--security-opt|-stop-timeout|--stop-signal\
         |--sysctl)
-            options+= ( "${1}" "${2}" )
+            options+=( "${1}" "${2}" )
             shift
             ;;
         *)
