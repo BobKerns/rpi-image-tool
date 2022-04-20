@@ -98,71 +98,9 @@ If an image file has been loaded, it will be mounted at `/work/image`, and `$PI_
 The docker container which performs the work must be run as a privileged container, to be able to mount
 the image file's partitions.
 
-### Running Raspberry Pi OS
-
-You can run Raspberry Pi OS under `docker`, even on an Intel system, via the `quemu` emulation package.
-
-Docker's emulation is enabled via the following command:
-
-```bash
-docker run --privileged linuxkit/binfmt:v0.8
-```
-
-To create a Raspberry Pi OS docker image, we need to convert a Raspberry Pi OS Distro (or a micro-SD card)
-to a docker image with the `dockerify` command:
-
-```bash
-rpi-image-tool import 2021-10-30-raspios-bullseye-arm64.img;
-rpi-image-tool dockerify - \
-| docker import - myacct/raspios:bullseye
-```
-
-The latter two steps are packaged in the [`dockerify`](dockerify) script:
-
-```bash
-./dockerify 2021-10-30-raspios-bullseye-arm64.img myacct/pi:bullseye
-```
-
-The resulting image can be conveniently run with the `pi` comamand:
-
-```bash
-./pi myacct/pi:bullseye
-```
-
-This optionally takes a command and arguments; this defaults `bash`.
-
-The image name defaults to `pi:latest`. Thus,
-
-```bash
-pi
-```
-
-will drop you into a bash prompt running Raspberry Pi OS.
-
-The current directory is mounted in the image as `/host` and made the current directory,
-making it easy to transfer files, etc.
-
-By default, the `--rm` and `-it` options are supplied, making it an interactive, temporary container instance.
-This means that on exiting, the container will be deleted. Supplying `--nodefault` will suppress these, while `--default` will reinstate them. The current directory will still be mapped to `/host`.
-
-Other behaviors can be had by invoking `docker run` directly; this command exists for convenience, and the
-Raspberry Pi OS image can be run with no special considerations.
-
-### Scripting
-
-Random one-off updates and modifications are to be discouraged.
-To achieve a repeatable process, _all_ setup should be scripted.
-Systematically enabling that is the primary purpose of this tool.
-
-If you supply a script to `rpi-image-tool` all of the subcommands will be regular `bash` commands.
-
-The `--interactive` mode (and the availability of `bash`, `emacs`, `vi`, or `nano`) are useful for working
-out just what is required, but the result should be captured in a setup script.
-
-`rpi-image-tool` in non-interactive mode outputs to `stdout` and `stderr` appropriately, making it
-friendly for use in scripts itself, perhaps as step near the end of a larger build process.
-
 ## Additional Resources
 
+* [Running Pi OS On Any Hardware](doc/pi-os-anywhere.md)
+* [Scripting](doc/scripting.md)
 * [Extending the Rasperry Pi OS Image Tool](doc/extending.md)
 * [Non-Raspberry Pi OS images](doc/non-raspos.md)

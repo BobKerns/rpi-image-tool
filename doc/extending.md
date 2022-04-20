@@ -61,11 +61,11 @@ To accomplish this for a script `myscript`, create a file `myscript.override`. S
 the filesystems (or `find_partions` to map the devices and set the environment variables w/o mounting
 the filesystems).
 
-### Environment Variables
+## Environment Variables
 
 The following environment variables are set up prior to invoking the subcommand scripts:
 
-#### From the host environent
+### From the host environent
 
 * `PI_USER_CWD`
   * The current working directory in the host
@@ -88,7 +88,7 @@ The following environment variables are set up prior to invoking the subcommand 
 * `PI_VOLUME`
   * The full name of the docker volume used to hold the image and intermediate work.
 
-#### In the builder
+### In the builder
 
 * `PI_INCLUDES`
   * The directory that holds scripts to be sourced.
