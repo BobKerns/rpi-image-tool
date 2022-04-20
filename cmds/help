@@ -10,7 +10,7 @@ case "${SUBCMD}" in
         (
             echo "Usage ${PI_INVOKER} $(basename -a "$0") <cmd>"
             echo "Commands: "
-            find "${PI_CMDS}" -type f -maxdepth 1 -printf '  %f\n'
+            find "${PI_CMDS}" -type f -maxdepth 1 ! -name '*.override' -printf '  %f\n'
         )1>&2
         exit 0
         ;;
