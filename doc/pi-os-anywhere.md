@@ -45,8 +45,8 @@ making it easy to transfer files, etc.
 By default, the `--rm` and `-it` options are supplied, making it an interactive, temporary container instance.
 This means that on exiting, the container will be deleted. Supplying `--nodefault` will suppress these, while `--default` will reinstate them. The current directory will still be mapped to `/host`.
 
-Other behaviors can be had by invoking `docker run` directly; this command exists for convenience, and the
-Raspberry Pi OS image can be run with no special considerations.
+Other behaviors can be had by invoking `docker run` directly; this command exists for
+convenience, and the Raspberry Pi OS image can be run with no special considerations.
 
 ## Extracting a Pi Disk Image from Docker
 
@@ -61,6 +61,34 @@ The command `undockerify` is used to extract a filesystem from a Raspberry Pi OS
 
 The labels/uuid are optional; they will be generated as needed.
 
-The imageName is the docker image name or id.
+The *imageName* is the `docker` image name or id.
 
 The *bootsize* and *rootsize* are the size of the respective filesystems, in MiB.
+
+You can use the `du` command to estimate the required sizes:
+
+**Root:**
+
+```bash
+ du --summarize --block-size=1M --count-links --apparent-size --one-file-system\
+   --exclude /boot\
+   --exclude /dev\
+   --exclude /host\
+   --exclude /media\
+   --exclude /mnt\
+   --exclude /proc\
+   --exclude /run\
+   --exclude /tmp\
+   /
+```
+
+**Boot:**
+
+```bash
+ du --summarize --block-size=1M --count-links --apparent-size --one-file-system /boot
+```
+
+This will be a lower bound. I suggest adding at least 1 MiB to the root filesystem.
+
+You do want to keep the filesystem small to keep the image size down; the filesystem
+can be expanded once it's installed on the media and booted.
