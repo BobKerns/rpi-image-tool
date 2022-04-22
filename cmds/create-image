@@ -10,7 +10,7 @@
 . "${PI_INCLUDES}/partitions.sh"
 
 LABEL_ID="$(printf "%04X%04X" $RANDOM $RANDOM)"
-BOOT_ID="$(printf "%04X%04X%04X" $RANDOM $RANDOM $RANDOM)"
+BOOT_ID="$(printf "%04X%04X%03X" $RANDOM $RANDOM $RANDOM)"
 ROOT_ID="$(uuidcdef -u)"
 
 while [ "${1:0:2}" = '--' ]; do
@@ -64,6 +64,7 @@ truncate --size=$(( DISK_SIZE * 512 )) "${PI_IMAGE_FILE}"
 sfdisk "${PI_IMAGE_FILE}" <<EOF
 label: dos
 label-id: ${LABEL_ID}
+unit: sectors
 
 start=$(( LABEL_SIZE )), size=$(( BOOT_SIZE )), type=c
 start=$(( LABEL_SIZE + BOOT_SIZE )), size=$(( ROOT_SIZE )), type=83
