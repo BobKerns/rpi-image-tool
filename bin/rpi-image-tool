@@ -18,7 +18,8 @@ export PI_BUILDER=${PI_BUILDER:-"${DFLT_BUILDER}"}
 
 export PI_VOLUME_SUFFIX=default
 
-export PI_INVOKER_BASE="$(basename -a "$0")"
+export PI_INVOKER_CMD="$(basename -a "$0")"
+export PI_INVOKER_BASE="${PI_INVOKER_CMD}"
 export PI_INVOKER="${PI_INVOKER_BASE} [--verbose|--debug] [--interactive] [--builder scriptname] [--volume volname]"
 # Should be the same as in vars.sh
 export PI_IMAGE_SRC_MOUNT=/data/image

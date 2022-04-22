@@ -55,6 +55,9 @@ find_partitions() {
     check_image
     trap "do_unmount_all" EXIT
     mapfile -t PARTS < <(kpartx -avs "${PI_IMAGE_FILE:?}" | cut -d' ' -f3)
+    if [ -z "${PARTS[0]}" ]; then
+        error "No partition table in image ${PI_IMAGE_FILE}, perhaps should run ${PI_INVOKER_CMD} image --clear"
+    fi
     export PI_BOOTDEV="/dev/mapper/${PARTS[0]}"
     export PI_ROOTDEV="/dev/mapper/${PARTS[1]}"
     export PI_LOOPDEV="/dev/$(echo "${PARTS[0]}" | sed -E 's/p[0-9]+$//')"
