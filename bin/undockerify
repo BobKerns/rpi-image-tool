@@ -2,10 +2,10 @@
 
 DIR="$(dirname "$0")"
 
-NAME="${1-pi:latest}"
+NAME="${1-pi:build}"
 shift
 
 echo "Creating Raspberry Pi image ${PI_IMAGE_FILE} from docker container ${NAME}"
 echo "This will take some time."
 
-docker image export "${NAME}" - | rpi-image-tool create-image "${@}"
+docker image export "${NAME}" - | rpi-image-tool create-image "${@}" || error "Image load failed"
