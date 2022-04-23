@@ -1,6 +1,7 @@
 #!/bin/bash
 
-DIR="$(dirname "$0")"
+export PI_CMD="${0}"
+DIR="$(dirname "${PI_CMD}")"
 export PATH="${DIR}:${PATH}"
 
 NAME="${1-pi:build}"
@@ -9,4 +10,4 @@ shift
 echo "Creating Raspberry Pi image ${PI_IMAGE_FILE} from docker container ${NAME}"
 echo "This will take some time."
 
-docker image export "${NAME}" - | rpi-image-tool create-image "${@}" || error "Image load failed"
+docker export "${NAME}" - | rpi-image-tool create-image "${@}" || error "Image load failed"
