@@ -5,6 +5,7 @@
 ####      Verify the paritions
 
 . "${PI_INCLUDES}/vars.sh"
+. "${PI_INCLUDES}/partitions.sh"
 
 do_delete_loop
 
