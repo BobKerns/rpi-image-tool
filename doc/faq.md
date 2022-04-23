@@ -76,3 +76,22 @@ so may be slower, depending on the relative speeds of the host processor vs an a
 4. The files from the Pi image are then tarred, piped, and written to a new disk image.
 5. The disk image is then optionally compressed into a `.zip` file.
 6. The result is then copied back to the host filesystem.
+
+## What can I do to speed it up?
+
+Here are some suggestions:
+
+* Remove unneeded packages.
+* If you don't need the full desktop version of the Raspberry Pi OS, start with the
+  the minimum.
+* Split your build into phases. For example:
+  1. Produce a Raspberry Pi image that contains the main packages that do not change often.
+  2. Starting with this, produce a 2nd image that contains packages and data under
+     development.
+  3. A final phase adds configuration data for a specific instance.
+
+Depending on circumstances, you may wish to combine the last 2 phases, or even reverse
+them. Splitting them as shown is most suitable for when you are setting up disks for a
+cluster. Setting up each cluster's can then just run the setup script for each node,
+based on the same unconfigured base image, and exporting (via `undockerify`) to the final
+image configured for each node.
