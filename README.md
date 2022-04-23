@@ -104,3 +104,4 @@ the image file's partitions.
 * [Scripting](doc/scripting.md)
 * [Extending the Rasperry Pi OS Image Tool](doc/extending.md)
 * [Non-Raspberry Pi OS images](doc/non-raspos.md)
+* [FAQ](doc/faq.md)
