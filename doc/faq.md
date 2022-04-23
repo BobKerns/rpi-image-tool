@@ -62,3 +62,17 @@ so others can get the benefit.
 Creating your own is the better choice when it's for your private needs. Then you won't
 have to worry about mergeing in changes; your contriution will be a layer atop the existin
 tool.
+
+## Why is it so slow?
+
+There is a lot of data copying, plus running the pi image involves emulation using `quemu`,
+so may be slower, depending on the relative speeds of the host processor vs an actual Pi.
+
+1. The original image is copied to a docker container (and decompressed if needed).
+2. The files in the image are copied to a `tar` file via a pipe, then untarred into
+   a Rasperry Pi `docker` image.
+3. Any needed packages are downloaded and installed into the Pi `docker` image.
+   * The download may be cached, saving time on subsequent runs.
+4. The files from the Pi image are then tarred, piped, and written to a new disk image.
+5. The disk image is then optionally compressed into a `.zip` file.
+6. The result is then copied back to the host filesystem.
