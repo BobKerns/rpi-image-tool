@@ -3,6 +3,10 @@
 export PI_CMD="${0}"
 DIR="$(dirname "${PI_CMD}")"
 export PATH="${DIR}:${PATH}"
+PDIR="$(dirname "${DIR}")
+export PI_INCLUDE="${PDIR}/inc"
+. "${PI_INCLUDE}/msgs.sh
+
 
 NAME="${1-pi:build}"
 shift
