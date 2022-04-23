@@ -39,11 +39,11 @@ pi
 
 will drop you into a bash prompt running Raspberry Pi OS.
 
-The current directory is mounted in the image as `/host` and made the current directory,
+The current directory is mounted in the image as `/mnt/host` and made the current directory,
 making it easy to transfer files, etc.
 
 By default, the `--rm` and `-it` options are supplied, making it an interactive, temporary container instance.
-This means that on exiting, the container will be deleted. Supplying `--nodefault` will suppress these, while `--default` will reinstate them. The current directory will still be mapped to `/host`.
+This means that on exiting, the container will be deleted. Supplying `--nodefault` will suppress these, while `--default` will reinstate them. The current directory will still be mapped to `/mnt/host`.
 
 Other behaviors can be had by invoking `docker run` directly; this command exists for
 convenience, and the Raspberry Pi OS image can be run with no special considerations.
@@ -73,7 +73,6 @@ You can use the `du` command to estimate the required sizes:
  du --summarize --block-size=1M --count-links --apparent-size --one-file-system\
    --exclude /boot\
    --exclude /dev\
-   --exclude /host\
    --exclude /media\
    --exclude /mnt\
    --exclude /proc\

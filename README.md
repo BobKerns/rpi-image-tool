@@ -86,10 +86,10 @@ Thse commands operate on working copy of the image stored in a docker volume
 
 If invoked via the provided script ([`rpi-image-tool`](rpi-image-tool)), images and scripts can be
 located in the current working directory or a subdirectory.
-The script mounts this under `/data/host/`, and this becomes the current working directory inside the container,
+The script mounts this under `/mnt/host/`, and this becomes the current working directory inside the container,
 allowing relative paths to work properly. (Obviously, relative paths involvig '../' are not supported.)
 
-The `cmds/` directory (`/data/host/cmds`) under the working directory will be added to `$PATH`,
+The `cmds/` directory (`/mnt/host/cmds`) under the working directory will be added to `$PATH`,
 making scripting more convenient.
 
 If an image file has been loaded, it will be mounted at `/work/image`, and `$PI_IMAGE_FILE` will point to it.

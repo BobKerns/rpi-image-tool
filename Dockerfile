@@ -9,8 +9,8 @@ ARG TAG=pi:latest
 # 3) If you are developing/debugging subcommand scripts, running in the
 #    root directory of the project will pick up changes in the cmds/ subdirectory
 #    without needing to rebuild the Docker container, because we include
-#    /data/host/cmds in the path, and our standard rpi-image-tool script
-#    bind-mounts the current directory on /data/host.
+#    /mnt/host/cmds in the path, and our standard rpi-image-tool script
+#    bind-mounts the current directory on /mnt/host.
 
 
 # Arrange to cache and not delete the downloaded packages.
@@ -30,10 +30,10 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 
 # Our directory structure should be fairly stable, but no need to reload emacs if it does.
 # So we put creating the directories, setting PATH, and the WORKDIR in the next 3 layers.
-VOLUME [ "/work", "/data/mnt", "/data/tmp", "/data/host"]
-RUN mkdir -p /work/build/root /work/build/root/boot /data/cmds /data/host/cmds /data/tmp /data/mnt
-ENV PATH "/data/host/cmds:/data/cmds:${PATH}"
-WORKDIR /data/host
+VOLUME [ "/work", "/mnt/buildtmp", "/mnt/host"]
+RUN mkdir -p /work/build/root /work/build/root/boot /mnt/cmds /mnt/host/cmds /mnt/buildtmp
+ENV PATH "/mnt/host/cmds:/data/cmds:${PATH}"
+WORKDIR /mnt/host
 
 # The main list of packages to be installed.
 
@@ -43,9 +43,8 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 
 # Our script data is the most likely to change, and quick to load.
 COPY cmds/ /data/cmds/
-COPY inc /data/inc
 
 
 # This is the script that runs when we invoke the container. It sets up the context
 # (mounts, environment variables) for the subcommand scripts, and runs them.
-ENTRYPOINT ["/data/inc/start"]
+ENTRYPOINT ["/data/cmds/inc/start"]

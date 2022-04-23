@@ -8,8 +8,8 @@ export PI_CMDS="${PI_CMDS:-"$(dirname "${PI_INCLUDES}")/cmds"}"
 DFLT_WDIR="/work"
 export PI_WORKDIR="${PI_WORKDIR:-"${DFLT_WDIR}"}"
 export PI_BUILD="${PI_BUILD:-"${PI_WORKDIR}/build"}"
-export PI_TMP="${PI_TMP:-"/data/tmp"}"
-export PI_HOST_DIR="${PI_HOST_DIR:-"/data/host"}"
+export PI_TMP="${PI_TMP:-"/mnt/buildtmp"}"
+export PI_HOST_DIR="${PI_HOST_DIR:-"/mnt/host"}"
 export PI_SAVED="${PI_SAVED:-"${PI_WORKDIR}/saved"}"
 export PI_PENDING="${PI_PENDING:-"${PI_WORKDIR}/pending"}"
 
@@ -18,7 +18,7 @@ export PI_BOOT="${PI_BOOT:-"${PI_ROOT}/boot"}"
 
 export PI_IMAGE_FILE=/work/image
 # Should be the same as in rpi-image-tool
-export PI_IMAGE_SRC_MOUNT="${PI_IMAGE_SRC_MOUNT-/data/image}"
+export PI_IMAGE_SRC_MOUNT="${PI_IMAGE_SRC_MOUNT-/mnt/image}"
 
 export PI_INVOKER_BASE="${PI_INVOKER_BASE:-"$(basename -a "$0")"}"
 

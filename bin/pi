@@ -44,4 +44,4 @@ shift
 export PI_CMD="${1-bash}"
 shift
 
-exec docker run "${defaults[@]}" "${options[@]}" -v"${PWD}":/host --workdir=/host "${NAME}" "bash" -c "${PI_CMD}" "${PI_CMD}"  "$@"
+exec docker run "${defaults[@]}" "${options[@]}" -v"${PWD}":/mnt/host --workdir=/mnt/host "${NAME}" "bash" -c "${PI_CMD}" "${PI_CMD}"  "$@"
