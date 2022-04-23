@@ -10,7 +10,8 @@
 . "${PI_INCLUDES}/partitions.sh"
 
 LABEL_ID="$(printf "%04X%04X" $RANDOM $RANDOM)"
-BOOT_ID="$(printf "%04X%04X%03X" $RANDOM $RANDOM $RANDOM)"
+BOOT_ID_12="$(printf "%04X%04X%04X" $RANDOM $RANDOM $RANDOM)"
+BOOT_ID="${BOOT_ID_12:0:11}"
 ROOT_ID="$(uuidcdef -u)"
 
 while [ "${1:0:2}" = '--' ]; do
