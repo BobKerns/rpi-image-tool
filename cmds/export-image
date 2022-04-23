@@ -5,21 +5,21 @@
 
 IMG="${1:?}"
 IMGDIR="$(dirname "${PI_IMAGE_SRC_MOUNT}")"
-IMGNAME="$(basename -a "$(basename -a "${IMG}" .img)" .zip)"
+IMGNAME="$(basename -s .zip -a "$(basename -s .img -a "${IMG}")")"
 
 if [ "${IMG: -4}" = '.zip' ]; then
     pushd "${IMGDIR}"
     if [ "${IMGNAME}" != "$(basename -a "${PI_IMAGE_FILE}")" ]; then
-        ln "${PI_IMAGE_FILE}" "${IMGNAME}"
+        ln -s "${PI_IMAGE_FILE}" "${IMGNAME}"
         zip "${PI_IMAGE_SRC_MOUNT}" "${IMGNAME}"
         rm "${IMGNAME}"
     else
         zip "${PI_IMAGE_SRC_MOUNT}" "${IMGNAME}"
     fi
     popd
-    dd status=progress flags=sync "${PI_IMAGE_FILE}.zip" "${PI_IMAGE_ARG}"
+    dd status=progress oflags=fsync "${PI_IMAGE_FILE}.zip" "${PI_IMAGE_ARG}"
 elif [ "${PI_IMAGE_ARG}" = '-' ]; then
-    dd status=progress flags=sync if="${PI_IMAGE_FILE}" bs=512
+    dd status=progress oflag=fsync if="${PI_IMAGE_FILE}" bs=512
 else
-    dd status=progress flags=sync if="${PI_IMAGE_FILE}" bs=512 of="${PI_IMAGE_SRC_MOUNT}"
+    dd status=progress oflag=fsync if="${PI_IMAGE_FILE}" bs=512 of="${PI_IMAGE_SRC_MOUNT}"
 fi
