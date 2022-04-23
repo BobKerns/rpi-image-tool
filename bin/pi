@@ -44,4 +44,9 @@ shift
 export PI_CMD="${1-bash}"
 shift
 
-exec docker run "${defaults[@]}" "${options[@]}" -v"${PWD}":/mnt/host --workdir=/mnt/host "${NAME}" "bash" -c "${PI_CMD}" "${PI_CMD}"  "$@"
+exec docker run "${defaults[@]}" "${options[@]}"\
+  -v"${PWD}":/mnt/host\
+  --mount type=volume,source=rpi_apt_cache,destination=/var/cache/apt\
+  --mount type=volume,source=rpi_apt_lib_cache,destination=/var/lib/apt\
+  --workdir=/mnt/host\
+  "${NAME}" "bash" -c "${PI_CMD}" "${PI_CMD}"  "$@"
