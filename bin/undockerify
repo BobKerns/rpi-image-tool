@@ -49,4 +49,4 @@ tar --create --file "-" "${EXCLUDES[@]}" -C / --checkpoint=5000 --checkpoint-act
 EOF
 chmod a+x "${SCRIPTFILE}"
 
-docker run -rm -v "${SCRIPTFILE}:/undockerify" "${NAME}"  /undockerify | rpi-image-tool create-image "${@}" || error "Image load failed"
+docker run --rm -v "${SCRIPTFILE}:/undockerify" "${NAME}"  /undockerify | rpi-image-tool create-image "${@}" || error "Image load failed"
