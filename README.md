@@ -47,9 +47,9 @@ For ease of use, this is packaged behind these front-end scripts:
 * [`rpi-image-tool`](doc/bin/rpi-image-tool.md): The main tool
 * [`grow-root-fs`](doc/bin/grow-root-fs.md): Increase the size of the root filesystem
 * [`dockerify`](doc/bin/dockerify.md): Import a Rasperry Pi boot image file as a docker container.
-* [`undockerify`](bin/undockerify): Export a Rasperry Pi boot image file from a `pi` docker container
-* [`pi`](bin/pi): Invoke a Raspberry Pi container.
-* [`pibuild`](bin/pibuild): Run a build in a pi container and create a new image.
+* [`undockerify`](doc/bin/undockerify.md): Export a Rasperry Pi boot image file from a `pi` docker container
+* [`pi`](doc/bin/pi.md): Invoke a Raspberry Pi container.
+* [`pibuild`](doc/bin/pibuild.md): Run a build in a pi container and create a new image.
 
 ## Additional Resources
 

@@ -1,6 +1,8 @@
-# dockerify
+# `dockerify` (command)
 
-Usage: dockerify *imageName*
+Usage:
+
+> `dockerify` *imageName*
 
 [*Source*](../../bin/dockerify)
 

@@ -1,6 +1,8 @@
-# grow-root-fs
+# `grow-root-fs` (command)
 
-Usage: `grow-root-fs` (`add` | `set`) *amt* [ `B` | `K` | `M` | `G` ]
+Usage:
+
+> `grow-root-fs` (`add` | `set`) *amt* [ `B` | `K` | `M` | `G` ]
 
 [*Source*](../../bin/grow-root-fs)
 
