@@ -16,10 +16,12 @@ echo "This will take some time."
 
 rpi-image-tool create-image init "${@}" || error "Image initialization failed"
 
-SCRIPTFILE="/tmp/$$.$RANDOM.script"
-CIDFILE="/tmp/$$.$RANDOM.cid"
+RKEY="/tmp/$$.${RANDOM}."
+SCRIPTFILE="${RKEY}.script"
+CIDFILE1="${RKEY}.1.cid"
+CIDFILE2="${RKEY}.2.cid"
 
-trap "rm -f '${SCRIPTFILE}' '${CIDFILE}'" exit
+trap "rm -f '${SCRIPTFILE}' '${CIDFILE1}' '${CIDFILE2}'" exit
 
 cat >"${SCRIPTFILE}" <<'EOF'
 #!/bin/bash
@@ -37,7 +39,7 @@ tar --create --file "-" "${EXCLUDES[@]}" -C /boot --checkpoint=5000 --checkpoint
 EOF
 chmod a+x "${SCRIPTFILE}"
 
-docker run --cidfile "${CIDFILE}" --rm -v "${SCRIPTFILE}:/undockerify" "${NAME}"  /undockerify | rpi-image-tool create-image boot - || error "Image /boot load failed"
+docker run --cidfile "${CIDFILE1}" --rm -v "${SCRIPTFILE}:/undockerify" "${NAME}"  /undockerify | rpi-image-tool create-image boot - || error "Image /boot load failed"
 
 
 cat >"${SCRIPTFILE}" <<'EOF'
@@ -74,4 +76,4 @@ tar --create --acls --sparse --selinux --xattrs --file "-" "${EXCLUDES[@]}" -C /
 EOF
 chmod a+x "${SCRIPTFILE}"
 
-docker run --cidfile "${CIDFILE}" --rm -v "${SCRIPTFILE}:/undockerify" "${NAME}"  /undockerify | rpi-image-tool create-image root - || error "Image root load failed"
+docker run --cidfile "${CIDFILE2}" --rm -v "${SCRIPTFILE}:/undockerify" "${NAME}"  /undockerify | rpi-image-tool create-image root - || error "Image root load failed"
