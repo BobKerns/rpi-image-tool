@@ -74,8 +74,6 @@ init_image() {
     rm -f "${PI_IMAGE_FILE}"
 
     truncate --size=$(( DISK_SIZE * 512 )) "${PI_IMAGE_FILE}"
-echo truncate --size=$(( DISK_SIZE * 512 )) "${PI_IMAGE_FILE}"
-ls -l "${PI_IMAGE_FILE}"
 
     # Create disk label
     sfdisk "${PI_IMAGE_FILE}" <<EOF
@@ -93,7 +91,6 @@ EOF
 
     find_partitions
 
-echo ${PI_BOOTDEV} ${PI_BOOT} ${PI_ROOTDEV} ${PI_ROOT}
     # Initialize the filesystems
 
     mkfs.fat -i "${BOOT_ID}" -n "${BOOT_LABEL^^}" "${PI_BOOTDEV}" || error $? -- "Could not make boot filesystem"
@@ -117,6 +114,7 @@ load_partition() {
     #  Untar the files into the filesystem
 
     cd "${MNT}"
+    echo "Loading partition ${MNT}..."
     tar --extract "${@}"
 }
 
