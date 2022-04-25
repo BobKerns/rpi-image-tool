@@ -36,7 +36,7 @@ tar --create --file "-" "${EXCLUDES[@]}" -C /boot --checkpoint=5000 --checkpoint
 EOF
 chmod a+x "${SCRIPTFILE}"
 
-docker run -cidfile /dev/null --rm -v "${SCRIPTFILE}:/undockerify" "${NAME}"  /undockerify | rpi-image-tool create-image boot - || error "Image /boot load failed"
+docker run --cidfile /dev/null --rm -v "${SCRIPTFILE}:/undockerify" "${NAME}"  /undockerify | rpi-image-tool create-image boot - || error "Image /boot load failed"
 
 
 cat >"${SCRIPTFILE}" <<'EOF'
