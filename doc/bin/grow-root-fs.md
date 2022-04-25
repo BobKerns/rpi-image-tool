@@ -1,6 +1,6 @@
 # grow-root-fs
 
-Usage: grow-root-fs (add | set) \<amt> [B|K|M|G]
+Usage: `grow-root-fs` (`add` | `set`) *amt* [ `B` | `K` | `M` | `G` ]
 
 [*Source*](../../bin/grow-root-fs)
 

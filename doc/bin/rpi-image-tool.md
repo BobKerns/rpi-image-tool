@@ -1,6 +1,6 @@
 # rpi-image-tool
 
-> Usage: rpi-image-tool \[--verbose|--debug] \[--interactive] [--volume volname] <.img file> \<cmd> \<args*>
+> Usage: `rpi-image-too`l \[ `--verbose` | `--debug` ] [ `--interactive` ] [ `--volume` *volname*] *.img_file* *cmd* *args*\*
 
 [*Source*](../../bin/rpi-image-tool)
 

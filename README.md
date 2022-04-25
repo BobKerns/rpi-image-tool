@@ -23,13 +23,30 @@ This enables workflows like this to be performed on any platform:
 6. Do further setup in a running image (such as installing packages).
 7. Export a new Raspberry Pi OS image file to copy to an SD card.
 
+## Getting Started
+
+To get started, you need the `rpiimagetool` `docker` image. Currently, you will need to
+build this yourself.
+
+From the root of this project, execute:
+
+```bash
+git clone https://github.com/BobKerns/rpi-image-tool
+cd rpi-image-tool
+docker build --pull --rm -f "Dockerfile" -t rpiimagetool:latest "."
+. setup.sh
+```
+
+The script [`setup.sh`](setup.sh) adds the directory with our top-level commands to your
+`PATH` environment variable.
+
 ## Usage
 
-For ease of use, this is packaged behind three front-end scripts:
+For ease of use, this is packaged behind these front-end scripts:
 
 * [`rpi-image-tool`](doc/bin/rpi-image-tool.md): The main tool
 * [`grow-root-fs`](doc/bin/grow-root-fs.md): Increase the size of the root filesystem
-* [`dockerify`](bin/dockerify): Import a Rasperry Pi boot image file as a docker container.
+* [`dockerify`](doc/bin/dockerify.md): Import a Rasperry Pi boot image file as a docker container.
 * [`undockerify`](bin/undockerify): Export a Rasperry Pi boot image file from a `pi` docker container
 * [`pi`](bin/pi): Invoke a Raspberry Pi container.
 * [`pibuild`](bin/pibuild): Run a build in a pi container and create a new image.
