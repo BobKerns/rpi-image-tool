@@ -12,8 +12,8 @@
 
 # Default options for docker
 
-declare -a options=( -it --rm )
-declare -a defaults=()
+declare -a options=()
+declare -a defaults=( -it --rm )
 while [ "${1:0:1}" = '-' ]; do
     case "${1}" in
         --nodefault)
