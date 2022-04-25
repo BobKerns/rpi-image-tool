@@ -31,7 +31,7 @@ cat >"${SCRIPTFILE}" <<'EOF'
 #!/bin/bash
 # Directories to not export
 EXCLUDE=(
-    "/undockerify"
+    "undockerify"
     )
 EXCLUDES=()
 for E in "${EXCLUDE[@]}"; do
@@ -57,23 +57,23 @@ cat >"${SCRIPTFILE}" <<'EOF'
 # Directories to not export
 EXCLUDE=(
     "boot/*"
-    "dev"
-    "proc"
-    "sys"
-    "tmp"
-    "run"
-    "mnt"
-    "media"
-    "var/run"
-    "var/lock"
-    "var/spool"
-    "var/cache/ldconfig"
-    "var/cache/debconf"
-    "var/cache/fontconfig"
-    "var/cache/private"
-    "var/cache/man"
-    "lost+found"
-    "etc/fstab"
+    "dev/"
+    "proc/"
+    "sys/"
+    "tmp/"
+    "run/"
+    "mnt/"
+    "media/"
+    "var/run/"
+    "var/lock/"
+    "var/spool/"
+    "var/cache/ldconfig/"
+    "var/cache/debconf/"
+    "var/cache/fontconfig/"
+    "var/cache/private/"
+    "var/cache/man/"
+    "lost+found/"
+    "etc/fstab/"
     "undockerify"
     )
 EXCLUDES=()
