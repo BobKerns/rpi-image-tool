@@ -17,7 +17,7 @@ if [ "${IMG: -4}" = '.zip' ]; then
         zip "${PI_IMAGE_SRC_MOUNT}" "${IMGNAME}"
     fi
     popd
-    dd status=progress conv=fsync "${PI_IMAGE_FILE}.zip" of="${PI_IMAGE_ARG}"
+    dd status=progress conv=fsync if="${PI_IMAGE_FILE}.zip" of="${PI_IMAGE_ARG}"
 elif [ "${PI_IMAGE_ARG}" = '-' ]; then
     dd status=progress conv=fsync if="${PI_IMAGE_FILE}" bs=512
 else
