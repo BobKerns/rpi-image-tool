@@ -20,8 +20,12 @@ RKEY="/tmp/$$.${RANDOM}."
 SCRIPTFILE="${RKEY}.script"
 CIDFILE1="${RKEY}.1.cid"
 CIDFILE2="${RKEY}.2.cid"
+FIFO1="${RKEY}.1.fifo"
+FIFO2=${RKEY}.2.fifo"
 
-trap "rm -f '${SCRIPTFILE}' '${CIDFILE1}' '${CIDFILE2}'" exit
+trap "rm -f '${SCRIPTFILE}' '${CIDFILE1}' '${CIDFILE2}' '${FIFO1}' '${FIFO2}'" exit
+
+mkfifo --mode=600 "${FIFO1}" "${FIFO2}""
 
 cat >"${SCRIPTFILE}" <<'EOF'
 #!/bin/bash
@@ -35,12 +39,18 @@ for E in "${EXCLUDE[@]}"; do
 done
 
 # Dump the relevant parts of the filesystem to a tar file.
-tar --create --file "-" "${EXCLUDES[@]}" -C /boot --checkpoint=5000 --checkpoint-action='echo=%u %T%*\r' .
+tar --create --file "${FIFO1}" "${EXCLUDES[@]}" -C /boot --checkpoint=5000 --checkpoint-action='echo=%u %T%*\r' .
 EOF
 chmod a+x "${SCRIPTFILE}"
 
-docker run --cidfile "${CIDFILE1}" --rm -v "${SCRIPTFILE}:/undockerify" "${NAME}"  /undockerify | rpi-image-tool create-image boot - || error "Image /boot load failed"
-
+docker run \
+    --cidfile "${CIDFILE1}" \
+    --rm \
+    -v "${SCRIPTFILE}:/undockerify" \
+    -v "${FIFO1}:${FIFO1}" \
+    "${NAME}"  \
+    /undockerify \
+    | rpi-image-tool create-image boot ${FIFO1} || error "Image /boot load failed"
 
 cat >"${SCRIPTFILE}" <<'EOF'
 #!/bin/bash
@@ -72,8 +82,15 @@ for E in "${EXCLUDE[@]}"; do
 done
 
 # Dump the relevant parts of the filesystem to a tar file.
-tar --create --acls --sparse --selinux --xattrs --file "-" "${EXCLUDES[@]}" -C / --checkpoint=5000 --checkpoint-action='echo=%u %T%*\r' .
+tar --create --acls --sparse --selinux --xattrs --file "${FIFO2}" "${EXCLUDES[@]}" -C / --checkpoint=5000 --checkpoint-action='echo=%u %T%*\r' .
 EOF
 chmod a+x "${SCRIPTFILE}"
 
-docker run --cidfile "${CIDFILE2}" --rm -v "${SCRIPTFILE}:/undockerify" "${NAME}"  /undockerify | rpi-image-tool create-image root - || error "Image root load failed"
+docker run \
+    --cidfile "${CIDFILE2}" \
+    --rm \
+    -v "${SCRIPTFILE}:/undockerify" \
+    -v "${FIFO2}:${FIFO2}" \
+    "${NAME}" \
+    /undockerify \
+    | rpi-image-tool create-image root "${FIFO2}" || error "Image root load failed"
