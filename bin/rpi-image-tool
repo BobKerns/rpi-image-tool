@@ -29,6 +29,7 @@ export PI_TERM="${TERM}"
 
 # Parse any supplied options.
 declare -a options=()
+declare -a dockeropts=()
 INTERACTIVE="-i"
 while [ -z "${SUBCMD}" -a ! -z "$*" ]; do
     case "$1" in
@@ -88,6 +89,15 @@ while [ -z "${SUBCMD}" -a ! -z "$*" ]; do
                 export PI_IMAGE_SRC_MOUNT="/mnt/$(basename -a "${PI_IMAGE_ARG}")"
                 ;;
             esac
+            ;;
+        --attach)
+            dockeropts+=("${1}" "${2}")
+            shift
+            shift
+            ;;
+        --*)
+            dockeropts+=("${1}")
+            shift
             ;;
         *)
             SUBCMD="$1"
@@ -179,6 +189,7 @@ killContainer() {
 
 if [ "${INTERACTIVE}" = '-it' ]; then
     docker run --privileged --rm $INTERACTIVE \
+        "${dockeropts[@]}" \
         "${mount_args[@]}" \
         "${export_args[@]}" \
         --tmpfs "${PI_TMP}:rw,noexec,nosuid,size=100M" \
@@ -189,9 +200,10 @@ else
     trap killContainer INT
     docker run --privileged --rm $INTERACTIVE \
         --cidfile "${CIDFILE}" \
+        "${dockeropts[@]}" \
         "${mount_args[@]}" \
         "${export_args[@]}" \
         --tmpfs "${PI_TMP}:rw,noexec,nosuid,size=100M" \
-        "${PI_BUILDER}" "${options[@]}" "$@" &
+        "${PI_BUILDER}" "${options[@]}" "$@"
     wait $!
 fi

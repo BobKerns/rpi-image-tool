@@ -9,60 +9,76 @@
 . "${PI_INCLUDES}/vars.sh"
 . "${PI_INCLUDES}/partitions.sh"
 
-LABEL_ID="$(printf "%04X%04X" $RANDOM $RANDOM)"
-BOOT_ID_12="$(printf "%04X%04X%04X" $RANDOM $RANDOM $RANDOM)"
-BOOT_ID="${BOOT_ID_12:0:11}"
-ROOT_ID="$(uuidcdef -u)"
+shopt -s extglob
 
-while [ "${1:0:2}" = '--' ]; do
-    case "$1" in
-        --label)
-            shift
-            LABEL_ID="$1"
-            shift
-            ;;
-        --boot-id)
-            shift
-            BOOT_ID="$1"
-            shift
-            ;;
-        --root-id|--root-uuid)
-            shift
-            ROOT_ID="$1"
-            shift
-            ;;
-        *)
-            shift
-            usage
-            exit
-            ;;
-    esac
-done
+init_image() {
+    local LABEL_ID="$(printf "%04X%04X" $RANDOM $RANDOM)"
+    local BOOT_LABEL=boot
+    local ROOT_LABEL=root
+    local BOOT_ID="$(printf "%04X%04X" $RANDOM $RANDOM)"
+    local ROOT_UUID="$(uuidcdef -u)"
+    while [ "${1:0:2}" = '--' ]; do
+        case "$1" in
+            --label)
+                shift
+                LABEL_ID="$1"
+                shift
+                ;;
+            --boot-id)
+                shift
+                BOOT_ID="$1"
+                shift
+                ;;
+            --boot-label)
+                shift
+                BOOT_LABEL="$1"
+                shift
+                ;;
+            --root-id)
+                shift
+                ROOT_ID="$1"
+                shift
+                ;;
+            --root-uuid)
+                shift
+                ROOT_UUID="$1"
+                shift
+                ;;
+            --root-label)
+                shift
+                ROOT_LABEL="$1"
+                shift
+                ;;
+            *)
+                shift
+                usage "${PI_CMD}"
+                exit
+                ;;
+        esac
+    done
 
+    local BOOT_SIZE=$(( ${1:?Boot Partition Size} * 2 * 1024 ))
+    msg BOOT_SIZE=${BOOT_SIZE}
+    local ROOT_SIZE=$(( ${2:?Root Partition Size} * 2 * 1024 ))
+    msg ROOT_SIZE=${ROOT_SIZE}
 
-# Size of boot partition in MiB
-BOOT_SIZE=$(( ${1:?Boot size} * 2 * 1024 ))
-shift
-# Size of root partition in MiB
-ROOT_SIZE=$(( ${1:?Root size} * 2 * 1024 ))
-shift
-INPUT_FILE="${1--}"
-shift
+    # We have to allow for the size of the disk label
+    local LABEL_SIZE=$(( 8192 ))
 
-# We have to allow for the size of the disk label
-LABEL_SIZE=$(( 8192 ))
+    local DISK_SIZE=$(( LABEL_SIZE + BOOT_SIZE + ROOT_SIZE ))
 
-DISK_SIZE=$(( LABEL_SIZE + BOOT_SIZE + ROOT_SIZE ))
+    msg DISK_SIZE=${DISK_SIZE}
 
-image --clear
+    image --clear
 
-rm -f "${PI_IMAGE_FILE}"
+    rm -f "${PI_IMAGE_FILE}"
 
-#dd status=progress bs=512 count=$(( DISK_SIZE )) if=/dev/zero of="${PI_IMAGE_FILE}"
-truncate --size=$(( DISK_SIZE * 512 )) "${PI_IMAGE_FILE}"
+    truncate --size=$(( DISK_SIZE * 512 )) "${PI_IMAGE_FILE}"
+echo truncate --size=$(( DISK_SIZE * 512 )) "${PI_IMAGE_FILE}"
+ls -l "${PI_IMAGE_FILE}"
 
-# Create disk label
-sfdisk "${PI_IMAGE_FILE}" <<EOF
+    # Create disk label
+    sfdisk "${PI_IMAGE_FILE}" <<EOF
 label: dos
 label-id: ${LABEL_ID}
 unit: sectors
@@ -71,25 +87,55 @@ start=$(( LABEL_SIZE )), size=$(( BOOT_SIZE )), type=c
 start=$(( LABEL_SIZE + BOOT_SIZE )), size=$(( ROOT_SIZE )), type=83
 EOF
 
-parterr=$?
+    parterr=$?
 
-[ $parterr ] || error $parterr -- "Could not write partition table."
+    [ $parterr ] || error $parterr -- "Could not write partition table."
 
-find_partitions
+    find_partitions
 
-# Initialize the filesystems
+echo ${PI_BOOTDEV} ${PI_BOOT} ${PI_ROOTDEV} ${PI_ROOT}
+    # Initialize the filesystems
 
-mkfs.fat -n "${BOOT_ID}" "${PI_BOOTDEV}" || error $? -- "Could not make boot filesystem"
-mkfs.ext4 -U "${ROOT_ID}" "${PI_ROOTDEV}" || error $? -- "Could not make root filesystem"
+    mkfs.fat -i "${BOOT_ID}" -n "${BOOT_LABEL^^}" "${PI_BOOTDEV}" || error $? -- "Could not make boot filesystem"
+    mkfs.ext4 -q -U "${ROOT_UUID}" -L "${ROOT_LABEL}" "${PI_ROOTDEV}" || error $? -- "Could not make root filesystem"
 
-# Mount the filesystems
+    # Mount the filesystems here as a sanity check.
 
-do_mount "${PI_ROOTDEV:?}" "${PI_ROOT:?}"
-do_mount "${PI_BOOTDEV:?}" "${PI_BOOT:?}"
+    do_mount "${PI_ROOTDEV:?}" "${PI_ROOT:?}"
+    do_mount "${PI_BOOTDEV:?}" "${PI_BOOT:?}"
+}
 
-#  Untar the files into the filesystem
+load_partition() {
+    local DEV="${1:?}"
+    local MNT="${2:?}"
+    shift 2
 
-if [ ! -z "${INPUT_FILE}" ]; then
-    cd "${PI_ROOT}"
-    tar xf "${INPUT_FILE}"
-fi
+    # Mount the filesystems
+
+    do_mount "${DEV}" "${MNT}"
+
+    #  Untar the files into the filesystem
+
+    cd "${MNT}"
+    tar --extract "${@}"
+}
+
+OPERATION="${1}"
+shift
+
+case "${OPERATION}" in
+    init)
+        init_image "${@}"
+        ;;
+    boot)
+        find_partitions
+        load_partition "${PI_BOOTDEV:?}" "${PI_BOOT:?}" --no-same-owner --file="${1--}"
+        ;;
+    root)
+        find_partitions
+        load_partition "${PI_ROOTDEV:?}" "${PI_ROOT:?}" --sparse --xattrs --selinux --file="${1--}"
+        ;;
+    *)
+        usage "${PI_CMD}"
+        ;;
+esac
