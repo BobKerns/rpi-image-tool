@@ -17,8 +17,9 @@ echo "This will take some time."
 rpi-image-tool create-image init "${@}" || error "Image initialization failed"
 
 SCRIPTFILE="/tmp/$$.$RANDOM.script"
+CIDFILE="/tmp/$$.$RANDOM.cid"
 
-trap "rm -f '${SCRIPTFILE}'" exit
+trap "rm -f '${SCRIPTFILE}' '${CIDFILE}'" exit
 
 cat >"${SCRIPTFILE}" <<'EOF'
 #!/bin/bash
@@ -72,9 +73,5 @@ done
 tar --create --acls --sparse --selinux --xattrs --file "-" "${EXCLUDES[@]}" -C / --checkpoint=5000 --checkpoint-action='echo=%u %T%*\r' .
 EOF
 chmod a+x "${SCRIPTFILE}"
-
-CIDFILE="/tmp/$$.$RANDOM.cid"
-
-trap "rm -f '${CIDFILE}'" exot
 
 docker run --cidfile "${CIDFILE}" --rm -v "${SCRIPTFILE}:/undockerify" "${NAME}"  /undockerify | rpi-image-tool create-image root - || error "Image root load failed"
