@@ -1,0 +1,70 @@
+#!/bin/bash
+
+#### Run a build script in a pi container and commit the changes to a new image.
+#### The new image ID is output on standard output.
+
+#### Usage: pibuild [--tag newImage] [--systemd] <piImage> <script> <args>*
+####
+#### If supplied, newImage will be used as the name:tag for the new image.
+#### If --systemd is supplied, systemd will be run.
+
+# Compute the absolute path for a possibly-relative pathname.
+abspath() {
+    if [[ -d "$1" ]]; then
+        (cd "$1"; pwd)
+    else
+        (cd "$(dirname "$1")"; echo "$(pwd)/$(basename -a "$1")")
+    fi
+}
+
+declare -a tag=()
+
+while [ "${1:0:2}" = '--' ]; do
+    case "${1}" in
+        --tag)
+            shift
+            tag+=( "${1}" )
+            shift
+            ;;
+        --systemd)
+            shift
+            SYSTEMD=yes
+            ;;
+    esac
+done
+
+PIIMAGE="${1:?Pi Image}"
+shift
+SCRIPT="$(abspath "${1:?Script}")"
+shift
+
+SCRIPTMNT="/tmp/$(basename -a "${SCRIPT}")"
+
+trap '[ ! -z "${CID}" ] && docker container rm "${CID}"' exit
+
+if [ "${SYSTEMD}" = 'yes' ]; then
+    CID="$(docker create \
+        --tmpfs=/run \
+        -v "${PWD}:/mnt/host" \
+        -v "${SCRIPT}:/${SCRIPTMNT}" \
+        --workdir=/mnt/host \
+        --privileged -it \
+        "${PIIMAGE}" \
+        /usr/lib/systemd/systemd --system --unit=basic.target)"
+        docker start "${CID}" || exit
+        docker exec -i --privileged --tty --workdir=/mnt/host "${CID}" "${SCRIPTMNT}" "${@}" || exit
+        docker stop "${CID}"
+else
+    CID="$(docker create \
+        --tmpfs=/run \
+        -v "${PWD}:/mnt/host" \
+        -v "${SCRIPT}:/${SCRIPTMNT}" \
+        --workdir=/mnt/host \
+        --privileged -it \
+        --init \
+        "${PIIMAGE}" \
+        "${SCRIPTMNT}" \
+        "${@}")"
+    docker start "${CID}" || exit
+fi
+docker commit "${CID}"

@@ -32,6 +32,7 @@ For ease of use, this is packaged behind three front-end scripts:
 * [`dockerify`](bin/dockerify): Import a Rasperry Pi boot image file as a docker container.
 * [`undockerify`](bin/undockerify): Export a Rasperry Pi boot image file from a `pi` docker container
 * [`pi`](bin/pi): Invoke a Raspberry Pi container.
+* [`pibuild`](bin/pibuild): Run a build in a pi container and create a new image.
 
 ## Additional Resources
 
