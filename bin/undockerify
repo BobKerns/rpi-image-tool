@@ -72,4 +72,8 @@ tar --create --acls --sparse --selinux --xattrs --file "-" "${EXCLUDES[@]}" -C /
 EOF
 chmod a+x "${SCRIPTFILE}"
 
-docker run --cidfile /dev/null --rm -v "${SCRIPTFILE}:/undockerify" "${NAME}"  /undockerify | rpi-image-tool create-image root - || error "Image root load failed"
+CIDFILE="/tmp/$$.$RANDOM.cid"
+
+trap "rm -f '${CIDFILE}'" exot
+
+docker run --cidfile "${CIDFILE}" --rm -v "${SCRIPTFILE}:/undockerify" "${NAME}"  /undockerify | rpi-image-tool create-image root - || error "Image root load failed"
