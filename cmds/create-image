@@ -106,20 +106,20 @@ load_partition() {
     local DEV="${1:?}"
     local MNT="${2:?}"
     shift 2
-
     # Mount the filesystems
 
-    do_mount "${DEV}" "${MNT}"
+    do_mount "${DEV}" "${MNT}" || error "Could not mount image"
 
     #  Untar the files into the filesystem
 
     cd "${MNT}"
     echo "Loading partition ${MNT}..."
-    tar --extract "${@}"
+    tar --extract --no-seek "${@}"
 }
 
 OPERATION="${1}"
 shift
+FILE="${1}"
 
 case "${OPERATION}" in
     init)
@@ -127,11 +127,11 @@ case "${OPERATION}" in
         ;;
     boot)
         find_partitions
-        load_partition "${PI_BOOTDEV:?}" "${PI_BOOT:?}" --no-same-owner --file="${1--}"
+        load_partition "${PI_BOOTDEV:?}" "${PI_BOOT:?}" --no-same-owner --file "${1--}"
         ;;
     root)
         find_partitions
-        load_partition "${PI_ROOTDEV:?}" "${PI_ROOT:?}" --sparse --xattrs --selinux --file="${1--}"
+        load_partition "${PI_ROOTDEV:?}" "${PI_ROOT:?}" --sparse --xattrs --selinux --file "${1--}"
         ;;
     *)
         usage "${PI_CMD}"

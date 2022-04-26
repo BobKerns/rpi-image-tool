@@ -16,16 +16,54 @@ echo "This will take some time."
 
 rpi-image-tool create-image init "${@}" || error "Image initialization failed"
 
-RKEY="/tmp/$$.${RANDOM}."
+RKEY="/tmp/$$.${RANDOM}"
 SCRIPTFILE="${RKEY}.script"
-CIDFILE1="${RKEY}.1.cid"
-CIDFILE2="${RKEY}.2.cid"
+CIDFILE1A="${RKEY}.1A.cid"
+CIDFILE1B="${RKEY}.1B.cid"
+CIDFILE2A="${RKEY}.2A.cid"
+CIDFILE2B="${RKEY}.2B.cid"
 FIFO1="${RKEY}.1.fifo"
-FIFO2=${RKEY}.2.fifo"
+FIFO2="${RKEY}.2.fifo"
+# CFIFO* are where the we mount them in the container.
+export CFIFO1="/mnt/$(basename -a "${FIFO1}")"
+export CFIFO2="/mnt/$(basename -a "${FIFO2}")"
 
-trap "rm -f '${SCRIPTFILE}' '${CIDFILE1}' '${CIDFILE2}' '${FIFO1}' '${FIFO2}'" exit
 
-mkfifo --mode=600 "${FIFO1}" "${FIFO2}""
+rmcontainer() {
+    local cidfile="${1}"
+    if [ -r "${cidfile}" ]; then
+        local cid="$(cat "${cidfile}")"
+        docker container rm --force "${cid}"
+    fi
+}
+
+cleanup() {
+    rm -f "${SCRIPTFILE}" \
+        "${CIDFILE1A}" "${CIDFILE1B}" "${CIDFILE2A}" "${CIDFILE2B}" \
+        "${FIFO1}" "${FIFO2}"
+    rmcontainer "${CIDFILE1A}"
+    rmcontainer "${CIDFILE1B}"
+    rmcontainer "${CIDFILE2A}"
+    rmcontainer "${CIDFILE2B}"
+}
+
+waitcontainers() {
+    local -a cids=()
+    for cfile in "${@}"; do
+        if [ -r "${cfile}" ]; then
+            cids+=( "$(cat "${cfile}")" )
+        fi
+    done
+    if (( ${#cids[@]} > 0 )); then
+        docker wait "${cids[@]}"
+    fi
+}
+
+trap cleanup exit
+trap cleanup int
+
+mkfifo -m 666 "${FIFO1}" "${FIFO2}"
+ls -l "${FIFO1}" "${FIFO2}"
 
 cat >"${SCRIPTFILE}" <<'EOF'
 #!/bin/bash
@@ -37,60 +75,96 @@ EXCLUDES=()
 for E in "${EXCLUDE[@]}"; do
     EXCLUDES+=(--exclude "${E}")
 done
-
+echo TAR: "${CFIFO1}"
 # Dump the relevant parts of the filesystem to a tar file.
-tar --create --file "${FIFO1}" "${EXCLUDES[@]}" -C /boot --checkpoint=5000 --checkpoint-action='echo=%u %T%*\r' .
+cd /boot
+tar --create --verbose --file "${CFIFO1}" "${EXCLUDES[@]}" --checkpoint=5000 --checkpoint-action='echo=%u %T%*\r' .
+status=$?
+if (( $status == 0 )); then
+    echo "Boot dump succeeded"
+else
+    echo "Boot dump failed: $status" 1>&2
+    exit $status
+fi
 EOF
-chmod a+x "${SCRIPTFILE}"
-
+chmod a+rx "${SCRIPTFILE}"
 docker run \
-    --cidfile "${CIDFILE1}" \
+    --detach \
+    --cidfile "${CIDFILE1A}" \
     --rm \
     -v "${SCRIPTFILE}:/undockerify" \
-    -v "${FIFO1}:${FIFO1}" \
+    -v "${FIFO1}:${CFIFO1}" \
+    --env CFIFO1 \
     "${NAME}"  \
-    /undockerify \
-    | rpi-image-tool create-image boot ${FIFO1} || error "Image /boot load failed"
+    /undockerify
+rpi-image-tool \
+    --detach \
+    --debug \
+    --cidfile "${CIDFILE1B}" \
+    -v "${FIFO1}:${CFIFO1}" \
+    --env CFIFO1 \
+    create-image boot "${CFIFO1}"
+
+waitcontainers "${CIDFILE1A}" "${CIDFILE1B}" || error "Image /boot load failed"
 
 cat >"${SCRIPTFILE}" <<'EOF'
 #!/bin/bash
 # Directories to not export
 EXCLUDE=(
-    "boot/*"
-    "dev/"
-    "proc/"
-    "sys/"
-    "tmp/"
-    "run/"
-    "mnt/"
-    "media/"
-    "var/run/"
-    "var/lock/"
-    "var/spool/"
-    "var/cache/ldconfig/"
-    "var/cache/debconf/"
-    "var/cache/fontconfig/"
-    "var/cache/private/"
-    "var/cache/man/"
-    "lost+found/"
-    "etc/fstab/"
-    "undockerify"
+    "./boot/*"
+    "./dev/*"
+    "./proc/*"
+    "./sys/*"
+    "./tmp/"*
+    "./run/"
+    "./mnt/*"
+    "./media/*"
+    "./var/run/*"
+    "./var/lock/*"
+    "./var/spool/*"
+    "./var/cache/ldconfig/*"
+    "./var/cache/debconf/*"
+    "./var/cache/fontconfig/*"
+    "./var/cache/private/*"
+    "./var/cache/man/*"
+    "./lost+found"
+    "./etc/fstab"
+    "./undockerify"
     )
 EXCLUDES=()
 for E in "${EXCLUDE[@]}"; do
     EXCLUDES+=(--exclude "${E}")
 done
-
+echo TAR: "${CFIFO2}"
 # Dump the relevant parts of the filesystem to a tar file.
-tar --create --acls --sparse --selinux --xattrs --file "${FIFO2}" "${EXCLUDES[@]}" -C / --checkpoint=5000 --checkpoint-action='echo=%u %T%*\r' .
+cd /
+tar --create --acls --sparse --selinux --xattrs --file "${CFIFO2}" "${EXCLUDES[@]}" --checkpoint=5000 --checkpoint-action='echo=%u %T%*\r' .
+status=$?
+if (( $status == 0 )); then
+    echo "Root dump succeeded"
+else
+    echo "Root dump failed: $status" 1>&2
+    exit $status
+fi
 EOF
-chmod a+x "${SCRIPTFILE}"
+chmod a+rx "${SCRIPTFILE}"
 
 docker run \
-    --cidfile "${CIDFILE2}" \
+    --detach \
+    --cidfile "${CIDFILE2A}" \
     --rm \
     -v "${SCRIPTFILE}:/undockerify" \
-    -v "${FIFO2}:${FIFO2}" \
+    -v "${FIFO2}:${CFIFO2}" \
+    --env CFIFO2 \
     "${NAME}" \
-    /undockerify \
-    | rpi-image-tool create-image root "${FIFO2}" || error "Image root load failed"
+    /undockerify
+
+rpi-image-tool \
+    --detach \
+    --debug \
+    --cidfile "${CIDFILE2B}" \
+    -v "${FIFO2}:${CFIFO2}" \
+    --env CFIFO2 \
+    create-image root "${CFIFO2}"
+
+waitcontainers "${CIDFILE2A}" "${CIDFILE2B}" || error "Image root load failed"
