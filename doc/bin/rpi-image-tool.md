@@ -2,7 +2,7 @@
 
 Usage:
 
-> `rpi-image-too`l \[ `--verbose` | `--debug` ] [ `--interactive` ] [ `--volume` *volname*] *.img_file* *cmd* *args*\*
+> `rpi-image-tool` *options*\* *.img_file* *cmd* *args*\*
 
 [*Source*](../../bin/rpi-image-tool)
 
@@ -13,9 +13,21 @@ The command can be a local script, or it can be `bash`, `emacs`, `nano`, or `vi`
 exporation or manual modifications. These four default to `--interactive`; other interactive tools may require
 passing the `--interactive` flag explicitly.
 
+## Options
+
+The following options are available:
+
+* `--verbose`: Enabale more detailed output.
+* `--debug`: Enable debug output.
+* `--interactive`: Attach stderr,stdout,stdin as a pseudo-tty.
+* `--volume` *volName*: Use a different volume for the the the image and changes.
+* `--no-mount`: Do not mount the image.
+
+ ## Subcommands
+
 Additionally, convenience subcommands are provided:
 
-## Data modifiers
+### Data modifiers
 
 These commands queue up changed versions of files, while preserving the original for comparison or reversion.
 The image is not directly modified; the changes are not applied until the `commit` subcommand is issued.
@@ -27,13 +39,13 @@ The image is not directly modified; the changes are not applied until the `commi
 * [`hostname`](cmds/hostname): Make the necessary changes to pre-set the hostname.
 * [`installHome`](cmds/installHome): Install a user home directory's files & set permissions.
 
-## Partition and filesystem utilities
+### Partition and filesystem utilities
 
 * [`blkids`](cmds/blkids): list the UUID's and labels of the partitioms and the partition map.
 * [`fsck`](cmds/fsck): perform `fsck` on the image filesystems.
 * [`partition-size`](cmds/partition-size): Show the partition sizes, or modify the root partition size.
 
-## Lifecycle subcommands
+### Lifecycle subcommands
 
 Thse commands operate on working copy of the image stored in a docker volume
 
@@ -45,13 +57,13 @@ Thse commands operate on working copy of the image stored in a docker volume
 * [`image`](cmds/image): Load, delete, or reset the image to be configured. This can be a `.img` file or a
   `.zip` file containing the image.
 
-## Utility subcommands
+### Utility subcommands
 
 * [`help`](cmds/help): Display a command's help documentation.
 * [`diff`](cmds/diff): Compare pending changes to the original
 * [`msg`](cmds/msg): Display a message on stderer (used by other commands).
 
-## User-supplied subcommands
+### User-supplied subcommands
 
 If invoked via the provided script ([`rpi-image-tool`](rpi-image-tool)), images and scripts can be
 located in the current working directory or a subdirectory.
