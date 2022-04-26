@@ -57,16 +57,16 @@ while [ "${1:0:2}" = '--' ]; do
             usage "$2"
             exit 0
             ;;
-        --debug|-d|-vv)
+        --debug)
             export PI_VERBOSE=yes
             export PI_DEBUG=yes
             shift
             ;;
-        --verbose|-v)
+        --verbose)
             export PI_VERBOSE=yes
             shift
             ;;
-        --nomount)
+        --no-mount|--nomount)
             export PI_NO_MOUNT=yes
             shift
             ;;
