@@ -16,7 +16,7 @@ export PI_INCLUDES="$(cd "$(dirname "$0")"; pwd)"
 declare -a options=()
 while [ "${1:0:2}" = '--' ]; do
     case "$1" in
-        --nomount)
+        --nomount|--no-mount)
             export PI_NO_MOUNT=yes
             shift
             ;;
