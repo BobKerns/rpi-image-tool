@@ -22,8 +22,10 @@ The following options are available:
 * `--interactive`: Attach stderr,stdout,stdin as a pseudo-tty.
 * `--iset` *setName*: Use a different volume for the the the image and changes.
 * `--no-mount`: Do not mount the image.
+* *docker options*: Most `docker run` options are supported.
+* `--no-rm`: By default, the `--rm` option to `docker run` is included. This removes it.
 
- ## Subcommands
+## Subcommands
 
 Additionally, convenience subcommands are provided:
 
@@ -67,14 +69,18 @@ Thse commands operate on working copy of the image stored in a docker volume
 
 If invoked via the provided script ([`rpi-image-tool`](rpi-image-tool)), images and scripts can be
 located in the current working directory or a subdirectory.
-The script mounts this under `/mnt/host/`, and this becomes the current working directory inside the container,
-allowing relative paths to work properly. (Obviously, relative paths involvig '../' are not supported.)
+The script mounts this under `/mnt/host/`, and this becomes the current working directory
+inside the container, allowing relative paths to work properly. (Obviously, relative paths
+involving '../' are not supported.)
 
-The `cmds/` directory (`/mnt/host/cmds`) under the working directory will be added to `$PATH`,
-making scripting more convenient.
+The `cmds/` directory (`/mnt/host/cmds`) under the working directory will be added to
+`$PATH`, making scripting more convenient.
 
-If an image file has been loaded, it will be mounted at `/work/image`, and `$PI_IMAGE_FILE` will point to it.
-`$PI_USER_IMAGE_FILE` will hold the user-supplied path, useful for error messages.
+If an image file has been loaded, it will be mounted at `/work/image`, and `$PI_IMAGE_FILE`
+will point to it. `$PI_USER_IMAGE_FILE` will hold the user-supplied path, useful for error
+messages.
 
 The docker container which performs the work must be run as a privileged container, to be able to mount
 the image file's partitions.
+
+A variety of environment variables are set prior to invoking subcommands. See [Environment Variables for `rpi-image-tool`](../environment.md) for a complete list.
