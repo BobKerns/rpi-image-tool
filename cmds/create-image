@@ -114,7 +114,7 @@ load_partition() {
 
     cd "${MNT}"
     echo "Loading partition ${MNT}..."
-    tar --extract --no-seek "${@}"
+    tar --extract --no-seek --acls --xattrs -selinux "${@}"
 }
 
 OPERATION="${1}"
