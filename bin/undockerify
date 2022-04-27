@@ -78,7 +78,7 @@ done
 echo TAR: "${CFIFO1}"
 # Dump the relevant parts of the filesystem to a tar file.
 cd /boot
-tar --create --verbose --file "${CFIFO1}" "${EXCLUDES[@]}" --checkpoint=5000 --checkpoint-action='echo=%u %T%*\r' .
+tar --create --file "${CFIFO1}" "${EXCLUDES[@]}" --checkpoint=5000 --checkpoint-action='echo=%u %T%*\r' .
 status=$?
 if (( $status == 0 )); then
     echo "Boot dump succeeded"
