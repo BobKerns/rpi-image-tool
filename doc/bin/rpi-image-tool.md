@@ -20,7 +20,7 @@ The following options are available:
 * `--verbose`: Enabale more detailed output.
 * `--debug`: Enable debug output.
 * `--interactive`: Attach stderr,stdout,stdin as a pseudo-tty.
-* `--volume` *volName*: Use a different volume for the the the image and changes.
+* `--iset` *setName*: Use a different volume for the the the image and changes.
 * `--no-mount`: Do not mount the image.
 
  ## Subcommands

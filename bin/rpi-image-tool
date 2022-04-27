@@ -74,7 +74,7 @@ while [ -z "${SUBCMD}" -a ! -z "$*" ]; do
             export PI_BUILDER="$1"
             shift
             ;;
-        --volume)
+        --iset)
             shift
             export PI_VOLUME_SUFFIX="$1"
             shift
