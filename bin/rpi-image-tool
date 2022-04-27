@@ -127,14 +127,24 @@ while [ -z "${SUBCMD}" -a ! -z "$*" ]; do
             # ensure it exists
             truncate --size=0 "${PI_IMAGE_ARG}"
             ;;
-        --env)
+        --env|-e)
             shift
             exports+=("${1}")
             shift
             ;;
-        --attach|--mount|-v|--device|--cidfile)
+        --attach|--mount|-v|--volume|--device|--cidfile|--name\
+        |--network|-a|--attach|-w|--workdir\
+        |--storage-opt|--tmpfs|-p|--tmpfs\
+        |--expose|--envfile|-l|--label|--label-file\
+        |--volumes-from|--gpus|--ulimit\
+        |--isolation|--security-opt|-stop-timeout|--stop-signal\
+        |--sysctl)
             dockeropts+=("${1}" "${2}")
             shift
+            shift
+            ;;
+        --*=*|-*=*)
+            dockeropts+=( $(echo "${1}" | sed -E 's/=/ /') )
             shift
             ;;
         --*|-*)
