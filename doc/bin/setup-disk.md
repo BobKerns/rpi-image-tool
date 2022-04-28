@@ -1,11 +1,24 @@
 # `setup-disk` (command)
 
 Usage:
-  `setup-disk`[`--type` `ext4` | `fat` | `none` ] [ `--label` *label* ] [ `--uuid` *uuid* ]
+  `setup-disk` [`--type` `ext4` | `fat` | `none` ]
+  [ `--label` *label* ] [ `--uuid` *uuid* ]
   [ `--id` *id* ] *filename* [*size*] [*content*]
 
-Create a file of *size* megabytes initialized with a filesystem that can be mounted into
-a container to substitute for a physical drive partition that is expected to be there.
+  `setup-disk` `--register` [`--type` `ext4` | `fat` | `none` ]
+  [ `--label` *label* ] [ `--uuid` *uuid* ]
+  [ `--id` *id* ] *name* [*size*] [*content*]
+
+  `setup-disk` `--list`
+
+  `setup-disk` `--unregister` *name*
+
+  `setup-disk` `--find` ( *name* | *label* | *id* | *uuid* )
+
+The first two forms create a file of *size* megabytes initialized with a filesystem that
+can be mounted into a container to substitute for a physical drive partition that is
+expected to be there. Without `--register`, the file is created in the indicated location.
+With `--register`, it is placed in a [registery](#Registry).
 
 For example, if `/etc/fstab` references `LABEL=mydata`, and requires that it has a
 directory `log/` you can create a suitable substitute via:
@@ -19,8 +32,10 @@ setup-disk --label mydata mydata.disk 1 mydata-skel
 The `--id` option is used for FAT filesystems (FAT32), while the `--uuid` option is used
 `ext3` filesystems. `--label` applies to both.
 
+## Using the disk image
+
 The disk image produced does not include a partition table. This makes it easier to set up
-and use.
+and use, and independent of just how the the physical partition is provided.
 
 To inject our new filesystem, we need to do three things:
 
@@ -29,6 +44,8 @@ To inject our new filesystem, we need to do three things:
 * Once the container starts, create a loop device backed by our image via
   `losetup -f /dev/host/mydata`.
 
+(The `--privileged` is unfortunately required for creating loop devices under docker.)
+
 It is then available for mounting, e.g. via:
 
 ```bash
@@ -36,8 +53,8 @@ mkdir /data
 mount LABEL=mydata /data
 ```
 
-Because loop devices under docker are shared you should be sure to unmount and remove
-the loop. A good way to do this is:
+Because loop devices under `docker` are shared between privileged containers,you should be
+sure to unmount and remove the loop device. A good way to do this is:
 
 ```bash
 #!/bin/bash
@@ -96,3 +113,15 @@ docker run \
     mypi-image:latest
     "${@}"
 ```
+
+There is no particular significance to `/dev/host`; it is just a descriptive place
+to put fake devices injected by the host and unlikely to conflict with other names.
+
+If, despite these countermeasures, you end up running out of loop devices, you can clear
+them with `losetup -D` run in a privileged container.
+
+## Registry
+
+Forms of the `setup-disk` command with the `--register`, `--unregister`, `--list`, or
+`--find` options operate on image files stored in a registry, where they are indexed
+by *name*, *label*, *uuid*, or *id*.

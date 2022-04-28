@@ -2,25 +2,38 @@
 
 ## Set up a an auxilliary disk image to substitute for other attached storage.
 
-LABEL="$(basename "$(basename "$(basename "${FILE}" .disk)" .dsk)" .img)"
-ID="$(printf "%04X%04X" $RANDOM $RANDOM)"
-UUID='$(uuidcdef -u)'
+# The docker image we will use.
+export PI_BUILDER=rpiimagetool:latest
+
 TYPE=ext4
+REGISTRY_ROOT="${REGISTRY_ROOT-"${HOME}/.rpi-disks"}"
 
 while [ "${1:0:2}" = '--' ]; do
     case "${1}" in
         --help|-h|'-?')
+            name="$(basename -a "${0}")"
             cat <<EOF
 Set up an auxiliary disk image that can substitute for other attached storage.
 
 Usage:
-$(basename -a "${0}") [--type (fat|ext4)] [--label label] [--uuid uuid] [--id partid] filename size [content]
+${name} [--type (fat|ext4|none)] [--label label] [--uuid uuid] [--id id] filename size [content]
+${name} --register [--type (fat|ext4|none)] [--label label] [--uuid uuid] [--id id] name size [content]
+${name} --list [name]
+${name} --find name
+${name} --unregister name
 
 size is in units of megabytes.
-type is one of 'fat' or 'ext4' (default = ext4)
+type is one of 'fat', 'ext4', or 'none' (default = ext4)
 --label defaults to the basename of the file w/o .img or .dsk
+--uuid and --id default to suitable random values.
+
+--register, --list, --find, and --unregister work with images registered in our
+registry, located in ${REGISTRY_ROOT}.
 EOF
             exit
+            ;;
+        --register|--unregister|--find|--list)
+            REGISTRY_OP="${1}"
             ;;
         --type)
             shift
@@ -52,9 +65,102 @@ EOF
     shift
 done
 
-export FILE="${1:?Disk image filename}"
+# Extract a label name from a filename.
+labelName() {
+    echo "$(basename -a "${1}")" | sed -E 's/(.img|.image|dsk|.disk)$//'
+}
+
+dosify() {
+    local label="${1:?Label}"
+    echo "${label:0:11}" | tr '[:lower:]' '[:upper:]'
+}
+
+# Find the directory in the registry for the given name
+findInRegistry() {
+    local name="$(labelName "${1:?name}")"
+    if [ -d "${REGISTRY_ROOT}/${name}" ]; then
+        echo "${REGISTRY_ROOT}/${name}"
+        return
+    fi
+    local file="$(find "${REGISTRY_ROOT}" \
+        '(' \
+            -name "LABEL=${name}" \
+            -o -name "LABEL=$(dosify "${name}")" \
+            -o -name "ID=${name}" \
+            -o -name "UUID=${name}" \
+        ')' \
+        -print\
+        | head -1)"
+    if [ ! -z "${file}" ]; then
+        echo "$(dirname "${file}")"
+    fi
+}
+
+# Show the name, size, and label/id/uuid for a given drive
+showDrive() {
+    local drive="${1:?drive name}"
+    local dir="${REGISTRY_ROOT}/${drive}"
+    local size=$(( $(stat -f %z "${dir}/${drive}.disk") / (1024 * 1024)))
+    echo "${drive}: size=${size} MB" \
+        $(cd "${dir}"; ls {LABEL,ID,UUID}=* 2>/dev/null \
+            | xargs -n 1 basename)
+}
+
+# Show the name, size, and label/id/uuid for all drives
+showDrives() {
+    for drive in $(find "${REGISTRY_ROOT}" -depth 1 -type d -print); do
+        showDrive "$(basename -a "${drive}")"
+    done
+}
+
+# Dispatch any specified registry op.
+case "${REGISTRY_OP}" in
+    --unregister)
+        loc="$(findInRegistry "${1}")"
+        rm -rf "${loc}"
+        exit;
+    ;;
+    --register)
+        drive="$(labelName "${1}")"
+        loc="${REGISTRY_ROOT}/${drive}"
+        # Replace any prior content
+        rm -rf "${loc}"
+        mkdir -p "${loc}"
+        export FILE="${loc}/${drive}.disk"
+        ;;
+    --find)
+        loc="$(findInRegistry "${1}")"
+        drive="$(basename -a "${loc}")"
+        if [ ! -z "${loc}" ]; then
+            echo "${loc}/${drive}.disk"
+        fi
+        exit
+        ;;
+    --list)
+        if [ -z "${1}" ]; then
+            showDrives
+        else
+            showDrive "$(labelName "${1}")"
+        fi
+        exit
+        ;;
+    '')
+        export FILE="${1:?Image filename}"
+        ;;
+esac
+
 SIZE="${2-1}"
 export CONTENT="${3}"
+
+if [ -z "${CONTENT}" -a ! -z "$(echo "${SIZE}" | sed -E 's/[0-9]*//')" ]; then
+    # SIZE omitted
+    CONTENT="${SIZE}"
+    SIZE=1
+fi
+
+LABEL="${LABEL:-"$(labelName "${FILE}")"}"
+ID="${ID:-"$(printf "%04X%04X" $RANDOM $RANDOM)"}"
+UUID="${UUID:-"$(docker run --rm --entrypoint '' "${PI_BUILDER}" uuidcdef -u)"}"
 
 # Compute the absolute path for a possibly-relative pathname.
 abspath() {
@@ -80,7 +186,7 @@ else
     # We don't have truncate, borrow it.
     docker run \
         "${options[@]}" \
-        rpiimagetool
+        "${PI_BUILDER}"
         truncate --size=$(( SIZE * 1024 * 1024 )) /mnt/img
     echo "${FILE} provisioned with ${SIZE} MB."
 fi
@@ -100,13 +206,17 @@ options+=(
     -v "${SCRIPT}:/mnt/script"
     )
 
+declare -a tar_options=()
+
 case "${TYPE}" in
     ext4)
-        echo "mkfs.ext4 -q -t ext4 -E discard -U \"${UUID}\" -L '${LABEL}' /mnt/img" >>"${SCRIPT}"
+        echo "mkfs.ext4 -q -t ext4 -E discard -U '${UUID}' -L '${LABEL}' /mnt/img" >>"${SCRIPT}"
+        tar_options+=( --acls )
         ;;
     dos|fat|fat32)
-        DOSLABEL="$(echo "${LABEL:0:11}" | tr '[:lower:]' '[:upper:]')"
-        echo "mkfs.fat -i '${ID}' -n '${DOSLABEL}' /mnt/img" >>"${SCRIPT}"
+        TYPE=fat
+        LABEL="$(dosify "${LABEL}")"
+        echo "mkfs.fat -i '${ID}' -n '${LABEL}' /mnt/img" >>"${SCRIPT}"
         ;;
     none)
         ;;
@@ -118,16 +228,18 @@ esac
 
 docker run \
     "${options[@]}" \
-    rpiimagetool \
+    "${PI_BUILDER}" \
     /mnt/script
 
 
 if [ ! -z "${CONTENT}" ]; then
     ABSCONTENT="$(abspath "${CONTENT}")"
+    export TAR_OPTIONS="${tar_options[@]}"
     options+=(
         -v "${ABSCONTENT}:/mnt/content"
         --env CONTENT
         --env FILE
+        --env TAR_OPTIONS
         )
     cat >"${SCRIPT}" <<'EOF'
 #!/bin/bash
@@ -136,12 +248,28 @@ LOOP="$(losetup -f --show /mnt/img)"
 mkdir /mnt/data
 mount "${LOOP}" /mnt/data
 echo "Copying ${CONTENT} into ${FILE}"
-tar --create --acls --sparse --selinux --file - -C /mnt/content . \
-| (cd /mnt/data; tar --extract --acls --selinux --file -)
+tar --create ${TAR_OPTIONS} --sparse --selinux --file - -C /mnt/content . \
+| (cd /mnt/data; tar --extract ${TAR_OPTIONS} --selinux --file -)
 EOF
     chmod a+x "${SCRIPT}"
     docker run \
         "${options[@]}" \
-        rpiimagetool \
+        "${PI_BUILDER}" \
         /mnt/script
 fi
+
+case "${REGISTRY_OP}" in
+    --register)
+        dir="$(dirname "${FILE}")"
+        case "${TYPE}" in
+            ext4)
+                ln "${FILE}" "${dir}/LABEL=${LABEL}"
+                ln "${FILE}" "${dir}/UUID=${UUID}"
+                ;;
+            fat)
+                ln "${FILE}" "${dir}/LABEL=${LABEL}"
+                ln "${FILE}" "${dir}/ID=${ID}"
+                ;;
+        esac
+        ;;
+esac
