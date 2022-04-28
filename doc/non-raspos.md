@@ -5,8 +5,8 @@ However, this has knowledge of the specific partitions, e.g. the first partition
 boot partition and should mount to `/boot`, while the second is the root partition,
 and no other partition are examined.
 
-This could be disabled with a `--flat` command-line option. This could mount each partition under /data/mnt,
-i.e. a Raspberry Pi boot image would look like this:
+This could be disabled with a `--flat` command-line option. This could mount each
+partition under /data/mnt, i.e. a Raspberry Pi boot image would look like this:
 
 * `/data/mnt/boot`
 * `/data/mnt/rootfs`
