@@ -7,7 +7,7 @@ Usage:
 
   `setup-disk` `--register` [`--type` `ext4` | `fat` | `none` ]
   [ `--label` *label* ] [ `--uuid` *uuid* ]
-  [ `--id` *id* ] *name* [*size*] [*content*]
+  [ `--id` *id* ] *name* [ *size* ] [ *content* ]
 
   `setup-disk` `--list`
 
