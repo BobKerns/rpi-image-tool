@@ -276,9 +276,8 @@ EOF
         "${NAME}" \
        "${@}"
         )"
-    docker start "${opt_interactive[@]}" --attach "${CID}"
-    docker wait "${CID}"
-    docker commit "${CID}" ${TAG}
+    docker start "${opt_interactive[@]}" --attach "${CID}" || (echo "Error: $? — commit aborted.")
+    docker commit "${CID}" ${TAG} && echo "Commited image ${TAG}"
     if [ ! -z "${opt_rm[*]}" ]; then
         docker rm --force --volumes "${CID}" >/dev/null
         unset CID
