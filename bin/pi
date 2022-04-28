@@ -1,53 +1,141 @@
 #!/bin/bash
 # Boot a pi image into a temporary container for inspection.
-# Usage: pi [--default|--nodefault] [docker option]* <image> <cmd> <args>*
+# Usage: pi [--default|--nodefault] [--disk disk] [docker option]* <image> <cmd> <args>*
 # --nodefault suppresses our default docker options
 # Arg 1: image to run. Default: pi:latest
 # Arg 2: Command to run. Default: bash
 # Arg 3-n: Additonal args passed.
 
-# The current working directory is mounted on /host, and made the working directory.
+# The current working directory is mounted on /mnt/host, and made the working directory.
 # This is done even if --nodefault is specified. (Otherwise, you could just use the
 # docker command directly!)
-
-# Default options for docker
 
 DIR="$(basename -a "${0}")"
 export PATH="${DIR}:${PATH}"
 
-SCRIPT="/tmp/$$.$RANDOM.sh"
+STARTUP="/tmp/$$.startup.$RANDOM.sh"
+SHUTDOWN="/tmp/$$.shutdown.$RANDOM.sh"
+
+declare -a options=()
+declare -a opt_interactive=( --interactive )
+declare -a opt_tty=( --tty )
+declare -a opt_rm=( --rm )
+declare -a disks=()
+declare -a privileged=()
+declare -a exec_options=()
+
+# Our default working directory
+WORKDIR=/mnt/host
 
 cleanup() {
-    rm -rf "${SCRIPT}"
+    if [ ! -z "${CID}" ]; then
+        docker exec --privileged --user 0  --interactive "${CID}" /sbin/shutdown-script
+        docker rm --volumes --force "${CID}"
+    fi
+    rm -rf "${STARTUP}" "${SHUTDOWN}"
 }
 
 trap cleanup exit
 
-declare -a options=()
-declare -a defaults=( -it --rm )
-declare -a disks=()
-declare -a privileged=()
-
 while [ "${1:0:1}" = '-' ]; do
     case "${1}" in
-        --nodefault)
-            defaults=()
+        --no-interactive)
+            opt_interactive=()
             ;;
-        --default)
-            defaults=( -it --rm )
+        --interactive|-i)
+            opt_interactive=( --interactive )
+            ;;
+        --no-tty)
+            opt_tty=()
+            ;;
+        --tty|-1)
+            opt_tty=( --tty )
+            ;;
+        --no-rm|--keep)
+            opt_rm=()
+            ;;
+        --rm|--no-keep)
+            opt_rm=( --rm )
+            ;;
+        # Canonicalize shift arguments
+        -a)
+            shift
+            set -- -a --attach "${@}"
+            ;;
+        -c)
+            shift
+            set -- -c --cpu-shares "${@}"
+            ;;
+        -d)
+            shift
+            set -- -d --detach "${@}"
+            ;;
+        -e)
+            shift
+            set -- -e --env "${@}"
+            ;;
+        -h)
+            shift
+            set -- -h --hostname "${@}"
+            ;;
+        -l)
+            shift
+            set -- -l --label "${@}"
+            ;;
+        -m)
+            shift
+            set -- -m --memory "${@}"
+            ;;
+        -p)
+            shift
+            set -- -p --publish "${@}"
+            ;;
+        -u)
+            shift
+            set -- -u --user "${@}"
+            ;;
+        -v)
+            shift
+            set -- -v --volume "${@}"
+            ;;
+        -w)
+            shift
+            set -- -w --workdir "${@}"
             ;;
         --disk)
             shift
             disks+=( "${1}" )
             privileged=( --privileged )
             ;;
+        --systemd)
+            export SYSTEMD=yes
+            privileged=( --privileged )
+            options+=(
+                --env SYSTEMD
+                --tmpfs=/run
+                )
+            ;;
+        --commit)
+            export COMMIT=yes
+            shift
+            TAG="${1}"
+            ;;
         --privileged)
             privileged=( --privileged )
             ;;
+        # Options appearing as --option value for exec
+        --detach-keys|--env|--envfile|--user)
+            exec_options+=( "${1}" "${2}" )
+            shift
+            ;;
+        --workdir)
+            shift
+            WORKDIR="${1}"
+            ;;
         # Options appearing as --option value (w/o =) in the documentation.
-        --cidfile|--name|--network|-a|--attach|-w|--workdir\
-        |--storage-opt|--tmpfs|-v|--volume|--mount|-p|--tmpfs\
-        |--expose|-e|--env|--envfile|-l|--label|--label-file\
+        --cidfile|--name|--network|-a|--attach\
+        |--storage-opt|--tmpfs|--volume|--mount|-p|--tmpfs\
+        |--expose|--label|--label-file\
         |--volumes-from|--gpus|--ulimit\
         |--isolation|--security-opt|-stop-timeout|--stop-signal\
         |--sysctl)
@@ -56,6 +144,10 @@ while [ "${1:0:1}" = '-' ]; do
             ;;
         --*=*|-*=*)
             options+=( $(echo "${1}" | sed -E 's/=/ /') )
+            ;;
+        # Split off combined short args
+        -??*)
+            set -- "${1:0:2}" "-${1:2}"
             ;;
         *)
             options+=( "${1}" )
@@ -69,12 +161,10 @@ options+=( "${privileged[@]}" )
 
 NAME="${1-pi:latest}"
 shift
-export PI_CMD="${1-bash}"
-shift
 
 # Extract a label name from a filename.
 labelName() {
-    echo "$(basename -a "${1}")" | sed -E 's/(.img|.image|dsk|.disk)$//'
+    echo "$(basename -a "${1:?name}")" | sed -E 's/(.img|.image|dsk|.disk)$//'
 }
 
 # Compute the absolute path for a possibly-relative pathname.
@@ -100,9 +190,102 @@ for d in "${disks[@]}"; do
     fi
 done
 
-cat >"${SCRIPT}" <<'EOF'
+cat>"${SHUTDOWN}" <<'EOF'
 #!/bin/bash
+echo SHUTDOWN
+for d in /dev/host/*; do
+    loop="$(losetup --associated "${d}" | cut -d ':' -f 1)"
+    if [ ! -z "${loop}" ]; then
+        umount --quiet "${loop}"
+        losetup -d "${loop}"
+    fi
+done
+EOF
+chmod a+x "${SHUTDOWN}"
 
+exec_options+=(
+    "${opt_interactive[@]}"
+    "${opt_tty[@]}"
+    )
+
+if [ "${SYSTEMD}" = 'yes' ]; then
+    cat >"${STARTUP}" <<'EOF'
+#!/bin/bash
+declare -a loops=()
+for d in /dev/host/*; do
+    echo Setting up "${d}"
+    loops+=( "$(losetup -f --show "${d}")" )
+    echo "loops=(" "${loops[@]}" ")"
+done
+exec /usr/lib/systemd/systemd --unit=basic.target
+EOF
+    chmod a+x "${STARTUP}"
+    CID="$(docker create \
+        "${options[@]}" \
+        --volume "${PWD}:/mnt/host" \
+        "${disk_mounts[@]}" \
+        --mount type=volume,source=rpi_apt_cache,destination=/var/cache/apt \
+        --mount type=volume,source=rpi_apt_lib_cache,destination=/var/lib/apt \
+        --volume "${STARTUP}:/sbin/startup-script" \
+        --volume "${SHUTDOWN}:/sbin/shutdown-script" \
+        --entrypoint="" \
+        "${privileged[@]}" \
+        "${NAME}" \
+        /sbin/startup-script
+        )"
+    docker start "${CID}"
+    docker exec \
+        "${privileged[@]}" \
+        "${exec_options[@]}" \
+        "--workdir=${WORKDIR}" \
+        "${CID}" \
+        "${@}"
+     if [ "${COMMIT}" = 'yes' ]; then
+        docker commit "${CID}" ${TAG}
+     fi
+     if [ ! -z "${opt_rm[*]}" ]; then
+        docker rm --force --volumes "${CID}" >/dev/null
+        unset CID
+     fi
+elif [ "${COMMIT}" = 'yes' ]; then
+    cat >"${STARTUP}" <<'EOF'
+#!/bin/bash
+declare -a loops=()
+if [ -d /dev/host ]; then
+    for d in /dev/host/*; do
+        echo Setting up "${d}"
+        loops+=( "$(losetup -f --show "${d}")" )
+        echo "loops=(" "${loops[@]}" ")"
+    done
+fi
+"${@}"
+EOF
+    chmod a+x "${STARTUP}"
+    CID="$(docker create \
+        "${options[@]}" \
+        "${exec_options[@]}" \
+        --volume "${PWD}:/mnt/host" \
+        "${disk_mounts[@]}" \
+        --mount type=volume,source=rpi_apt_cache,destination=/var/cache/apt \
+        --mount type=volume,source=rpi_apt_lib_cache,destination=/var/lib/apt \
+        --volume "${STARTUP}:/sbin/startup-script" \
+        --volume "${SHUTDOWN}:/sbin/shutdown-script" \
+        --entrypoint="" \
+        "${privileged[@]}" \
+        "--workdir=${WORKDIR}" \
+        "${NAME}" \
+       "${@}"
+        )"
+    docker start "${opt_interactive[@]}" --attach "${CID}"
+    docker wait "${CID}"
+    docker commit "${CID}" ${TAG}
+    if [ ! -z "${opt_rm[*]}" ]; then
+        docker rm --force --volumes "${CID}" >/dev/null
+        unset CID
+    fi
+else
+    cat >"${STARTUP}" <<'EOF'
+#!/bin/bash
 declare -a loops=()
 unloop() {
     for l in "${loops[@]}"; do
@@ -113,21 +296,27 @@ unloop() {
 
 trap unloop exit
 
-for d in /dev/host/*; do
-    loops+=( "$(losetup -f --show "${d}")" )
-done
-
+if [ -d /dev/host ]; then
+    for d in /dev/host/*; do
+        echo Setting up "${d}"
+        loops+=( "$(losetup -f --show "${d}")" )
+        echo "loops=(" "${loops[@]}" ")"
+    done
+fi
 "${@}"
 EOF
-chmod a+x "${SCRIPT}"
-
-exec docker run "${defaults[@]}" "${options[@]}" \
-  -v"${PWD}":/mnt/host \
-  "${disk_mounts[@]}" \
-  --mount type=volume,source=rpi_apt_cache,destination=/var/cache/apt \
-  --mount type=volume,source=rpi_apt_lib_cache,destination=/var/lib/apt \
-  --workdir=/mnt/host \
-  -v "${SCRIPT}:/sbin/startup-script" \
-  --entrypoint "/sbin/startup-script" \
-  "${NAME}" \
-  "bash" -c "${PI_CMD}" "${PI_CMD}"  "$@"
+    chmod a+x "${STARTUP}"
+    exec docker run \
+        "${options[@]}" \
+        "${exec_options[@]}" \
+        "${opt_rm[@]}" \
+        --volume "${PWD}:/mnt/host" \
+        "${disk_mounts[@]}" \
+        --mount type=volume,source=rpi_apt_cache,destination=/var/cache/apt \
+        --mount type=volume,source=rpi_apt_lib_cache,destination=/var/lib/apt \
+        "--workdir=${WORKDIR}" \
+        --volume "${STARTUP}:/sbin/startup-script" \
+        --entrypoint="" \
+        "${NAME}" \
+        /sbin/startup-script "${@}"
+fi
