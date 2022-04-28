@@ -14,6 +14,8 @@
 
 declare -a options=()
 declare -a defaults=( -it --rm )
+declare -a disks=()
+
 while [ "${1:0:1}" = '-' ]; do
     case "${1}" in
         --nodefault)
@@ -22,6 +24,9 @@ while [ "${1:0:1}" = '-' ]; do
         --default)
             defaults=( -it --rm )
             ;;
+        --disk)
+            shift
+            disks+=( "${1}" )
         # Options appearing as --option value (w/o =) in the documentation.
         --cidfile|--name|--network|-a|--attach|-w|--workdir\
         |--storage-opt|--tmpfs|-v|--volume|--mount|-p|--tmpfs\
@@ -47,8 +52,37 @@ shift
 export PI_CMD="${1-bash}"
 shift
 
-exec docker run "${defaults[@]}" "${options[@]}"\
-  -v"${PWD}":/mnt/host\
+# Extract a label name from a filename.
+labelName() {
+    echo "$(basename -a "${1}")" | sed -E 's/(.img|.image|dsk|.disk)$//'
+}
+
+# Compute the absolute path for a possibly-relative pathname.
+abspath() {
+    if [[ -d "$1" ]]; then
+        (cd "$1"; pwd)
+    else
+        (cd "$(dirname "$1")"; echo "$(pwd)/$(basename -a "$1")")
+    fi
+}
+
+declare -a disk_mounts=()
+for d in "${disks[@]}"; do
+    if [ ! -r "${d}" ]; then
+        disk="$(disk_setup --find "${d}")"
+    else
+        disk="$(abspath "${d}")"
+    fi
+    if [ -z "${disk}" ]; then
+        echo "Disk ${d} not found; skipping"
+    else
+        disk_mounts+=( -v "${disk}:/dev/host/$(labelName ${disk}")" )
+    fi
+done
+
+exec docker run "${defaults[@]}" "${options[@]}" \
+  -v"${PWD}":/mnt/host \
+  "${disk_mounts[@]}" \
   --mount type=volume,source=rpi_apt_cache,destination=/var/cache/apt \
   --mount type=volume,source=rpi_apt_lib_cache,destination=/var/lib/apt \
   --workdir=/mnt/host \
