@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+
+## Set up a an auxilliary disk image to substitute for other attached storage.
+
+LABEL="$(basename "$(basename "$(basename "${FILE}" .disk)" .dsk)" .img)"
+ID="$(printf "%04X%04X" $RANDOM $RANDOM)"
+UUID='$(uuidcdef -u)'
+TYPE=ext4
+
+while [ "${1:0:2}" = '--' ]; do
+    case "${1}" in
+        --help|-h|'-?')
+            cat <<EOF
+Set up an auxiliary disk image that can substitute for other attached storage.
+
+Usage:
+$(basename -a "${0}") [--type (fat|ext4)] [--label label] [--uuid uuid] [--id partid] filename size [content]
+
+size is in units of megabytes.
+type is one of 'fat' or 'ext4' (default = ext4)
+--label defaults to the basename of the file w/o .img or .dsk
+EOF
+            exit
+            ;;
+        --type)
+            shift
+            TYPE="${1}"
+            ;;
+        --label)
+            shift
+            LABEL="${1}"
+            ;;
+        --uuid)
+            shift
+            UUID="${1}"
+            ;;
+        --id)
+            shift
+            ID="${1}"
+            ;;
+        --type=*|--label=*|--uuid=*|--id=*)
+            arg="${1}"
+            shift
+            # Inject the two-arg version.
+            set -- "${1}" $(echo "${arg}" | sed -E "s/=/ /") "${@}"
+            ;;
+        *)
+            echo "Unknown option ${1}" >&2
+            exit 2
+            ;;
+    esac
+    shift
+done
+
+export FILE="${1:?Disk image filename}"
+SIZE="${2-1}"
+export CONTENT="${3}"
+
+# Compute the absolute path for a possibly-relative pathname.
+abspath() {
+    if [[ -d "$1" ]]; then
+        (cd "$1"; pwd)
+    else
+        (cd "$(dirname "$1")"; echo "$(pwd)/$(basename -a "$1")")
+    fi
+}
+
+declare -a options=(
+    --rm
+    -v "$(abspath "${FILE}"):/mnt/img"
+    --entrypoint=''
+)
+
+: >"${FILE}"
+if [ "$(type -t truncate)" = 'file' ]; then
+    # We have truncate!
+    truncate --size=$(( SIZE * 1024 * 1024 )) "${FILE}"
+    echo "${FILE} provisioned with ${SIZE} MB."
+else
+    # We don't have truncate, borrow it.
+    docker run \
+        "${options[@]}" \
+        rpiimagetool
+        truncate --size=$(( SIZE * 1024 * 1024 )) /mnt/img
+    echo "${FILE} provisioned with ${SIZE} MB."
+fi
+
+SCRIPT="/tmp/$$.$RANDOM.sh"
+
+trap "rm -f '${SCRIPT}'" exit
+
+cat >"${SCRIPT}" <<'EOF'
+#!/bin/bash
+EOF
+chmod a+x "${SCRIPT}"
+
+# Our next script involves accessing our image as a device, so will need to run privileged
+options+=(
+    --privileged
+    -v "${SCRIPT}:/mnt/script"
+    )
+
+case "${TYPE}" in
+    ext4)
+        echo "mkfs.ext4 -q -t ext4 -E discard -U \"${UUID}\" -L '${LABEL}' /mnt/img" >>"${SCRIPT}"
+        ;;
+    dos|fat|fat32)
+        DOSLABEL="$(echo "${LABEL:0:11}" | tr '[:lower:]' '[:upper:]')"
+        echo "mkfs.fat -i '${ID}' -n '${DOSLABEL}' /mnt/img" >>"${SCRIPT}"
+        ;;
+    none)
+        ;;
+    *)
+        echo "Unknown filesystem type: ${TYPE}" 1>*2
+        exit 2
+        ;;
+esac
+
+docker run \
+    "${options[@]}" \
+    rpiimagetool \
+    /mnt/script
+
+
+if [ ! -z "${CONTENT}" ]; then
+    ABSCONTENT="$(abspath "${CONTENT}")"
+    options+=(
+        -v "${ABSCONTENT}:/mnt/content"
+        --env CONTENT
+        --env FILE
+        )
+    cat >"${SCRIPT}" <<'EOF'
+#!/bin/bash
+trap 'umount /mnt/data; losetup -d "${LOOP}"' exit
+LOOP="$(losetup -f --show /mnt/img)"
+mkdir /mnt/data
+mount "${LOOP}" /mnt/data
+echo "Copying ${CONTENT} into ${FILE}"
+tar --create --acls --sparse --selinux --file - -C /mnt/content . \
+| (cd /mnt/data; tar --extract --acls --selinux --file -)
+EOF
+    chmod a+x "${SCRIPT}"
+    docker run \
+        "${options[@]}" \
+        rpiimagetool \
+        /mnt/script
+fi

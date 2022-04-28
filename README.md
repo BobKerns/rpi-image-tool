@@ -50,6 +50,7 @@ For ease of use, this is packaged behind these front-end scripts:
 * [`undockerify`](doc/bin/undockerify.md): Export a Rasperry Pi boot image file from a `pi` docker container
 * [`pi`](doc/bin/pi.md): Invoke a Raspberry Pi container.
 * [`pibuild`](doc/bin/pibuild.md): Run a build in a pi container and create a new image.
+* [`setup-disk`](doc/bin/setup-disk.md): Create a thinly-provisioned filesystem image to
 
 ## Additional Resources
 
