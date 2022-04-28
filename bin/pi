@@ -12,9 +12,21 @@
 
 # Default options for docker
 
+DIR="$(basename -a "${0}")"
+export PATH="${DIR}:${PATH}"
+
+SCRIPT="/tmp/$$.$RANDOM.sh"
+
+cleanup() {
+    rm -rf "${SCRIPT}"
+}
+
+trap cleanup exit
+
 declare -a options=()
 declare -a defaults=( -it --rm )
 declare -a disks=()
+declare -a privileged=()
 
 while [ "${1:0:1}" = '-' ]; do
     case "${1}" in
@@ -27,6 +39,11 @@ while [ "${1:0:1}" = '-' ]; do
         --disk)
             shift
             disks+=( "${1}" )
+            privileged=( --privileged )
+            ;;
+        --privileged)
+            privileged=( --privileged )
+            ;;
         # Options appearing as --option value (w/o =) in the documentation.
         --cidfile|--name|--network|-a|--attach|-w|--workdir\
         |--storage-opt|--tmpfs|-v|--volume|--mount|-p|--tmpfs\
@@ -46,6 +63,9 @@ while [ "${1:0:1}" = '-' ]; do
     esac
     shift
 done
+
+# Add --privileged if requested or required
+options+=( "${privileged[@]}" )
 
 NAME="${1-pi:latest}"
 shift
@@ -68,17 +88,38 @@ abspath() {
 
 declare -a disk_mounts=()
 for d in "${disks[@]}"; do
-    if [ ! -r "${d}" ]; then
-        disk="$(disk_setup --find "${d}")"
+    if [ ! -f "${d}" ]; then
+        disk="$(setup-disk --find "${d}")"
     else
         disk="$(abspath "${d}")"
     fi
     if [ -z "${disk}" ]; then
         echo "Disk ${d} not found; skipping"
     else
-        disk_mounts+=( -v "${disk}:/dev/host/$(labelName ${disk}")" )
+        disk_mounts+=( -v "${disk}:/dev/host/$(labelName "${disk}")" )
     fi
 done
+
+cat >"${SCRIPT}" <<'EOF'
+#!/bin/bash
+
+declare -a loops=()
+unloop() {
+    for l in "${loops[@]}"; do
+        umount --quiet "${l}"
+        losetup -d "${l}"
+    done
+}
+
+trap unloop exit
+
+for d in /dev/host/*; do
+    loops+=( "$(losetup -f --show "${d}")" )
+done
+
+"${@}"
+EOF
+chmod a+x "${SCRIPT}"
 
 exec docker run "${defaults[@]}" "${options[@]}" \
   -v"${PWD}":/mnt/host \
@@ -86,5 +127,7 @@ exec docker run "${defaults[@]}" "${options[@]}" \
   --mount type=volume,source=rpi_apt_cache,destination=/var/cache/apt \
   --mount type=volume,source=rpi_apt_lib_cache,destination=/var/lib/apt \
   --workdir=/mnt/host \
+  -v "${SCRIPT}:/sbin/startup-script" \
+  --entrypoint "/sbin/startup-script" \
   "${NAME}" \
   "bash" -c "${PI_CMD}" "${PI_CMD}"  "$@"

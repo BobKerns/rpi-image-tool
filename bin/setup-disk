@@ -16,16 +16,16 @@ while [ "${1:0:2}" = '--' ]; do
 Set up an auxiliary disk image that can substitute for other attached storage.
 
 Usage:
-${name} [--type (fat|ext4|none)] [--label label] [--uuid uuid] [--id id] filename size [content]
-${name} --register [--type (fat|ext4|none)] [--label label] [--uuid uuid] [--id id] name size [content]
+${name} [--type (fat|ext4|none)] [--label label] [--partlabel label] [--uuid uuid] [--partuuid id] [--id id] filename size [content]
+${name} --register [--type (fat|ext4|none)] [--label label] [--uuid uuid] [--partuuid id] name size [content]
 ${name} --list [name]
 ${name} --find name
 ${name} --unregister name
 
 size is in units of megabytes.
 type is one of 'fat', 'ext4', or 'none' (default = ext4)
---label defaults to the basename of the file w/o .img or .dsk
---uuid and --id default to suitable random values.
+--label and --partlabel default to the basename of the file w/o .img or .dsk
+--uuid, --partuuid, and --id default to suitable random values.
 
 --register, --list, --find, and --unregister work with images registered in our
 registry, located in ${REGISTRY_ROOT}.
@@ -43,9 +43,17 @@ EOF
             shift
             LABEL="${1}"
             ;;
+        --partlabel)
+            shift
+            PARTLABEL="${1}"
+            ;;
         --uuid)
             shift
             UUID="${1}"
+            ;;
+        --partuuid)
+            shift
+            PARTUUID="${1}"
             ;;
         --id)
             shift
@@ -86,8 +94,10 @@ findInRegistry() {
         '(' \
             -name "LABEL=${name}" \
             -o -name "LABEL=$(dosify "${name}")" \
+            -o -name "PARTLABEL=${name}" \
             -o -name "ID=${name}" \
             -o -name "UUID=${name}" \
+            -o -name "PARTUUID=${name}" \
         ')' \
         -print\
         | head -1)"
@@ -102,7 +112,7 @@ showDrive() {
     local dir="${REGISTRY_ROOT}/${drive}"
     local size=$(( $(stat -f %z "${dir}/${drive}.disk") / (1024 * 1024)))
     echo "${drive}: size=${size} MB" \
-        $(cd "${dir}"; ls {LABEL,ID,UUID}=* 2>/dev/null \
+        $(cd "${dir}"; ls {LABEL,PARTLABEL,ID,PARTUUID,UUID}=* 2>/dev/null \
             | xargs -n 1 basename)
 }
 
@@ -159,7 +169,9 @@ if [ -z "${CONTENT}" -a ! -z "$(echo "${SIZE}" | sed -E 's/[0-9]*//')" ]; then
 fi
 
 LABEL="${LABEL:-"$(labelName "${FILE}")"}"
-ID="${ID:-"$(printf "%04X%04X" $RANDOM $RANDOM)"}"
+PARTLABEL="${PARTLABEL:-"${LABEL}"}"
+ID="${ID:-"$(printf "%04x%04x" $RANDOM $RANDOM)"}"
+PARTUUID="${PARTUUID:-"${ID:0:4}-${ID:4}"}"
 UUID="${UUID:-"$(docker run --rm --entrypoint '' "${PI_BUILDER}" uuidcdef -u)"}"
 
 # Compute the absolute path for a possibly-relative pathname.
@@ -261,15 +273,10 @@ fi
 case "${REGISTRY_OP}" in
     --register)
         dir="$(dirname "${FILE}")"
-        case "${TYPE}" in
-            ext4)
-                ln "${FILE}" "${dir}/LABEL=${LABEL}"
-                ln "${FILE}" "${dir}/UUID=${UUID}"
-                ;;
-            fat)
-                ln "${FILE}" "${dir}/LABEL=${LABEL}"
-                ln "${FILE}" "${dir}/ID=${ID}"
-                ;;
-        esac
+        ln "${FILE}" "${dir}/LABEL=${LABEL}"
+        ln "${FILE}" "${dir}/PARTLABEL=${PARTLABEL}"
+        ln "${FILE}" "${dir}/UUID=${UUID}"
+        ln "${FILE}" "${dir}/PARTUUID=${PARTUUID}"
+        ln "${FILE}" "${dir}/ID=${ID}"
         ;;
 esac

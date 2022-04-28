@@ -1,19 +1,27 @@
 # `setup-disk` (command)
 
 Usage:
-  `setup-disk` [`--type` `ext4` | `fat` | `none` ]
-  [ `--label` *label* ] [ `--uuid` *uuid* ]
+
+> `setup-disk` [`--type` `ext4` | `fat` | `none` ]
+  [ `--label` *label* ] [ `--partlabel` *label* ]
+  [ `--uuid` *uuid* ] [ `--partuid` *uuid* ]
   [ `--id` *id* ] *filename* [*size*] [*content*]
+>
+> `setup-disk` `--register` [`--type` `ext4` | `fat` | `none` ]
+  [ `--label` *label* ] [ `--partlabel` *label* ]
+  [ `--uuid` *uuid* ] [ `--partuid` *uuid* ]
+  [ `--id` *id* ] *filename* [*size*] [*content*]
+>
+> `setup-disk` `--list`
+>
+> `setup-disk` `--unregister` *name*
+>
+> `setup-disk` `--find` ( *name* | *label* | *id* | *uuid* )
 
-  `setup-disk` `--register` [`--type` `ext4` | `fat` | `none` ]
-  [ `--label` *label* ] [ `--uuid` *uuid* ]
-  [ `--id` *id* ] *name* [ *size* ] [ *content* ]
+Create and manage axilliary disk images to substitute for physical disks on the target
+hardware.
 
-  `setup-disk` `--list`
-
-  `setup-disk` `--unregister` *name*
-
-  `setup-disk` `--find` ( *name* | *label* | *id* | *uuid* )
+## Creating disk images
 
 The first two forms create a file of *size* megabytes initialized with a filesystem that
 can be mounted into a container to substitute for a physical drive partition that is
@@ -29,13 +37,33 @@ mkdir -p mydata-skel/log
 setup-disk --label mydata mydata.disk 1 mydata-skel
 ```
 
-The `--id` option is used for FAT filesystems (FAT32), while the `--uuid` option is used
-`ext3` filesystems. `--label` applies to both.
+Supply any of the `--label`, `--partlabel`, `--uuid`, `--partuuid`, or `--id` fields
+you intend to use, e.g. in an `/etc/fstab` file. Without `--register`, `--partlabel` and
+`--partuuid` are not used.
 
-## Using the disk image
+## Using the disk image via the `pi` command
+
+Any of the identifiers may be used in the `--disk` option to the `pi` command.
+
+## Registry
+
+Forms of the `setup-disk` command with the `--register`, `--unregister`, `--list`, or
+`--find` options operate on image files stored in a registry, where they are indexed
+by *name*, *label*, *uuid*, or *id*.
+
+Use of the registry is recommended, but is not required. Among other things, it tracks
+what labels and UUIDs apply.
+
+Note that the only identifier that must be unique is the name. Thus, we can have
+different disks with different content for testing, but with the same `UUID=`. Thus,
+selecting the image to attach by name is preferred.
+
+## Using the disk image manually
 
 The disk image produced does not include a partition table. This makes it easier to set up
-and use, and independent of just how the the physical partition is provided.
+and use, and independent of just how the the physical partition is provided. The downside
+is that `PARTUUID=` and `PARTLABEL=` cannot function in an `/etc/fstab` file without
+additional setup.
 
 To inject our new filesystem, we need to do three things:
 
@@ -119,9 +147,3 @@ to put fake devices injected by the host and unlikely to conflict with other nam
 
 If, despite these countermeasures, you end up running out of loop devices, you can clear
 them with `losetup -D` run in a privileged container.
-
-## Registry
-
-Forms of the `setup-disk` command with the `--register`, `--unregister`, `--list`, or
-`--find` options operate on image files stored in a registry, where they are indexed
-by *name*, *label*, *uuid*, or *id*.
