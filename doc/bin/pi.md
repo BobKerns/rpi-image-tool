@@ -30,8 +30,13 @@ In addition to the usual `docker` options, *options*, may contain:
   > available for mounting via `LABEL=` or `UUID=`. The other identifiers are not supported.
 * `--commit` *tag*:
   > Commit any changes made in the running of this container to a new image tagged *tag*.
+  >
+  > Use this for scripted building.
 * `--systemd`:
   > Like `--init`, excepts runs `systemd` as the init process.
+  >
+  > This can be used to validate `systemd` configuration, or to enable installation of
+  > packages that expect it to be running.
 
 The current working directory is mounted as `/mnt/host`, and made the working directory in
 the container, unless overridden with `--workingdir` *directory*.
