@@ -9,8 +9,16 @@ export PI_CMD="$0"
 DIR="$(dirname "$(dirname "${PI_CMD}")")"
 export PI_INCLUDES="${DIR}/inc"
 BIN="${DIR}/bin"
+PI_PLATFORM="${PI_PLATFORM:-"linux/arm64"}"
 
 . "${PI_INCLUDES}/vars.sh"
+
+case "${1}" in
+    --platform)
+        PI_PLATFORM="${2}"
+        shift 2
+        ;;
+esac
 
 NAME="${1-pi:latest}"
 shift
@@ -21,6 +29,8 @@ echo "This will take some time."
 "${BIN}/rpi-image-tool" commit
 
 msg "Exporting files and importing into docker container ${NAME}"
-"${BIN}/rpi-image-tool" export-docker - | docker import - "${NAME}" "$@" || error "Export failed." || exit
+"${BIN}/rpi-image-tool" export-docker - \
+| docker import - "${NAME}" --platform "${PI_PLATFORM}" "$@" \
+|| error "Export failed." || exit
 
 msg "The image can be run via ${BIN}/pi ${NAME}"
