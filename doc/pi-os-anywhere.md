@@ -1,24 +1,23 @@
 # Running Raspberry Pi OS on Any Hardware
 
-You can run Raspberry Pi OS under `docker`, even on an Intel system, via the `quemu` emulation package. It ... just works, by magic. So, while running on an Intel iMac:
+You can run Raspberry Pi OS under [`docker`](https://docs.docker.com/reference/), even on an Intel system,
+via the [`quemu` emulation package](https://www.qemu.org/). It ... just works, by magic. So, while running
+on an Intel iMac:
 
 ```bash
-main:~p/rpi-image-tool$ arch
+$ arch
 i386
 ```
 
 But running ARM64 code:
 
 ```bash
-main:~p/rpi-image-tool$ pi pi:latest ps -aux
+$ pi pi:latest ps -aux
 USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
 root           1  0.0  0.2 150900 11976 pts/0    Ssl+ 21:01   0:00 /usr/bin/qemu-aarch64 /bin/bash /bin/bash /sbin/startup-script ps -aux
 root           9  0.0  0.2 153424 11004 ?        Rl+  Apr25   0:00 ps -aux
-main:~p/rpi-image-tool$ pi pi:latest file /bin/bash
+$ pi pi:latest file /bin/bash
 /bin/bash: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=641209ff5307ca8eb85bd6368cb5f7f2e694897e, for GNU/Linux 3.7.0, stripped
-main:~p/rpi-image-tool$
-
-
 ```
 
 Here we see that `qemu` is interpreting our Arm64 bash command that runs our startup script.
@@ -77,16 +76,18 @@ convenience, and the Raspberry Pi OS image can be run with no special considerat
 > Note: The`--platform` `linux/arm64` argument may be required if the image was not properly
   labeled.
 
-## Configuring a Pi system via a `docker build` and a `Dockerfile`
+## Configuring a Pi system via a `docker build` and a [`Dockerfile`](https://docs.docker.com/engine/reference/builder/)
 
 Note: <span style='color:red;'>*Experimental*</span>
 
 Once you have a `docker` image, it is straightforward to build an image with the desired components.
 The result will still be a `docker` image, but it brings us a big step closer to our goal.
 
-The only `Dockerfile` caveat I've noticed so far is that without usiing `buildx` and its
-`docker-container` driver, the platform in the docker image is set incorrectly to that of
-the build host.
+The only [`Dockerfile`](https://docs.docker.com/engine/reference/builder/) caveat I've
+noticed so far is that without using
+[`buildx`](https://docs.docker.com/engine/reference/commandline/buildx/) and
+its`docker-container` driver, the platform in the docker image is set incorrectly
+to that of the build host.
 
 `buildx` is overall the more capable and superior build system, compared to the original
 `docker build` command. However, it integrates awkwardly, requiring use of a separate
@@ -98,14 +99,17 @@ problem at further stages.
 
 One reason to consider using `buildx` is to be able to run on a native `arm64` node (not neessarily a Raspberry Pi), for improved performance.
 
-> Be aware that the [`pi` command](../bin/pi) overrides the `ENTRYPOINT` at runtime
+> Be aware that the [`pi` command](bin/pi.md) overrides the `ENTRYPOINT` at runtime
 to handle the mounting of disks and other early tasks. A possible future workaround
 would be to set an environment variable to the same value, and have the startup script
 check and run it if provided.
 
 ## Extracting a Pi Disk Image from Docker
 
-The command `undockerify` is used to extract a filesystem from a Raspberry Pi OS `docker` image. It takes as arguments:
+The command [`undockerify`](bin/undockerify.md) is used to extract a filesystem from a
+Raspberry Pi OS [`docker`](https://docs.docker.com/reference/) image.
+
+It takes as arguments:
 
 * `--label` *label*
 * `--boot-id` *label*

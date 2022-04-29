@@ -64,3 +64,15 @@ For ease of use, this is packaged behind these front-end scripts:
 * [Extending the Rasperry Pi OS Image Tool](doc/extending.md)
 * [Non-Raspberry Pi OS images](doc/non-raspos.md)
 * [FAQ](doc/faq.md)
+
+## External documentation
+
+* [Docker](https://docs.docker.com/reference/)
+* [`docker build`](https://docs.docker.com/engine/reference/commandline/build/)
+* [`docker buildx`](https://docs.docker.com/engine/reference/commandline/build/)
+* [`docker run`](https://docs.docker.com/engine/reference/commandline/run/)
+* [Updating and Upgrading Raspberry Pi OS](https://www.raspberrypi.com/documentation/computers/os.html#updating-and-upgrading-raspberry-pi-os)
+* [Raspberry Pi OS (64-bit) (download)](https://www.raspberrypi.com/software/operating-systems/#raspberry-pi-os-64-bit)
+* [The `config.txt` file](https://www.raspberrypi.com/documentation/computers/config_txt.html)
+* [`losetup`](https://man7.org/linux/man-pages/man8/losetup.8.html)
+* [`kpartx`](https://man7.org/linux/man-pages/man8/losetup.8.html)
