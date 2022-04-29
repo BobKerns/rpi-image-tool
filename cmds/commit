@@ -4,4 +4,5 @@
 #### Usage: ${PI_INVOKER}
 
 msg "Committing pending changes to the image."
-cp -rv "${PI_PENDING}"/* "${PI_ROOT}/"
+mkdir -p "${PI_PENDING}"
+cp -av "${PI_PENDING}"/ "${PI_ROOT}"
