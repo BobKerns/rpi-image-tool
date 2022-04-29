@@ -164,6 +164,11 @@ options+=( "${privileged[@]}" )
 NAME="${1-pi:latest}"
 shift
 
+if [ -z "$*" ]; then
+    # We default to bash
+    set -- bash
+fi
+
 # Extract a label name from a filename.
 labelName() {
     echo "$(basename -a "${1:?name}")" | sed -E 's/(.img|.image|dsk|.disk)$//'
