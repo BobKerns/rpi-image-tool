@@ -20,7 +20,8 @@ $ pi pi:latest file /bin/bash
 /bin/bash: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=641209ff5307ca8eb85bd6368cb5f7f2e694897e, for GNU/Linux 3.7.0, stripped
 ```
 
-Here we see that `qemu` is interpreting our Arm64 bash command that runs our startup script.
+Here we see that [`qemu`](https://www.qemu.org/) is interpreting our Arm64 bash command that runs our
+startup script.
 
 Docker's emulation is enabled via the following command:
 
@@ -28,6 +29,8 @@ Docker's emulation is enabled via the following command:
 docker run --privileged linuxkit/binfmt:v0.8
 ```
 
+It is claimed that Docker Desktop comes with it already enabled, but having enabled it manually, I cannot
+confirm this.
 ## Creating a pi docker image with [`dockerify` (script)](bin/dockerify.md)
 
 To create a Raspberry Pi OS `docker` image, we need to convert a Raspberry Pi OS Distro
@@ -94,7 +97,8 @@ to that of the build host.
 repository. You can run your own, but that can be difficult to set up. Notably, the default
 port of 5000 is in use by components of MacOS ("AirTunes").
 
-But it looks like specifying the platform correctly during `docker import` will avoid the
+But it looks like specifying the platform correctly during
+[`docker import`](https://docs.docker.com/engine/reference/commandline/import/) will avoid the
 problem at further stages.
 
 One reason to consider using `buildx` is to be able to run on a native `arm64` node (not neessarily a Raspberry Pi), for improved performance.
