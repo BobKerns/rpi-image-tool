@@ -42,13 +42,13 @@ while [ "${1:0:1}" = '-' ]; do
         --no-interactive)
             opt_interactive=()
             ;;
-        --interactive|-i)
+        --interactive)
             opt_interactive=( --interactive )
             ;;
         --no-tty)
             opt_tty=()
             ;;
-        --tty|-1)
+        --tty)
             opt_tty=( --tty )
             ;;
         --no-rm|--keep)
@@ -57,7 +57,7 @@ while [ "${1:0:1}" = '-' ]; do
         --rm|--no-keep)
             opt_rm=( --rm )
             ;;
-        # Canonicalize shift arguments
+        # Canonicalize short options
         -a)
             shift
             set -- -a --attach "${@}"
@@ -78,6 +78,10 @@ while [ "${1:0:1}" = '-' ]; do
             shift
             set -- -h --hostname "${@}"
             ;;
+        -i)
+            shift
+            set -- -i --interactive "${@}"
+            ;;
         -l)
             shift
             set -- -l --label "${@}"
@@ -89,6 +93,10 @@ while [ "${1:0:1}" = '-' ]; do
         -p)
             shift
             set -- -p --publish "${@}"
+            ;;
+        -t)
+            shift
+            set -- -t --tty "${@}"
             ;;
         -u)
             shift
@@ -132,13 +140,14 @@ while [ "${1:0:1}" = '-' ]; do
             shift
             WORKDIR="${1}"
             ;;
-        # Options appearing as --option value (w/o =) in the documentation.
+        # Options appearing as --option value (w/o =) in the documentation,
+        # or otherwise determined to work.
         --cidfile|--name|--network|-a|--attach\
         |--storage-opt|--tmpfs|--volume|--mount|-p|--tmpfs\
         |--expose|--label|--label-file\
         |--volumes-from|--gpus|--ulimit\
         |--isolation|--security-opt|-stop-timeout|--stop-signal\
-        |--sysctl)
+        |--sysctl|--platform)
             options+=( "${1}" "${2}" )
             shift
             ;;
