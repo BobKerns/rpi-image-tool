@@ -14,6 +14,7 @@ DIR="$(basename -a "${0}")"
 export PATH="${DIR}:${PATH}"
 
 STARTUP="/tmp/$$.startup.$RANDOM.sh"
+EXECSCRIPT="/tmp/$$.exec.$RANDOM.sh"
 SHUTDOWN="/tmp/$$.shutdown.$RANDOM.sh"
 
 declare -a options=()
@@ -32,7 +33,7 @@ cleanup() {
         docker exec --privileged --user 0  --interactive "${CID}" /sbin/shutdown-script
         docker rm --volumes --force "${CID}"
     fi
-    rm -rf "${STARTUP}" "${SHUTDOWN}"
+    rm -rf "${STARTUP}" "${EXECSCRIPT}" "${SHUTDOWN}"
 }
 
 trap cleanup exit
@@ -157,7 +158,7 @@ while [ "${1:0:1}" = '-' ]; do
        --*)
             options+=( "${1}" )
             ;;
-        # Split off combined short args
+        # Split off combined short options
         -??*)
             ARG="${1}"
             shift
@@ -250,12 +251,17 @@ EOF
         /sbin/startup-script
         )"
     docker start "${CID}"
+    echo >"${EXECSCRIPT}" <<'EOF'
+#!/bin/bash
+${ENTRYPOINT} "${@}"
+EOF
+    chmod a+x "${EXECSCRIPT}"
     docker exec \
         "${privileged[@]}" \
         "${exec_options[@]}" \
         "--workdir=${WORKDIR}" \
         "${CID}" \
-        "${@}"
+        "${EXECSCRIPT}" "${@}"
      if [ "${COMMIT}" = 'yes' ]; then
         docker commit "${CID}" ${TAG}
      fi
@@ -274,7 +280,7 @@ if [ -d /dev/host ]; then
         echo "loops=(" "${loops[@]}" ")"
     done
 fi
-"${@}"
+${ENTRYPOINT} "${@}"
 EOF
     chmod a+x "${STARTUP}"
     CID="$(docker create \
@@ -286,7 +292,7 @@ EOF
         --mount type=volume,source=rpi_apt_lib_cache,destination=/var/lib/apt \
         --volume "${STARTUP}:/sbin/startup-script" \
         --volume "${SHUTDOWN}:/sbin/shutdown-script" \
-        --entrypoint="" \
+        --entrypoint="/sbin/startup-script" \
         "${privileged[@]}" \
         "--workdir=${WORKDIR}" \
         "${NAME}" \
@@ -323,7 +329,7 @@ if [ -d /dev/host ]; then
         echo "loops=(" "${loops[@]}" ")"
     done
 fi
-"${@}"
+${ENTRYPOINT} "${@}"
 EOF
     chmod a+x "${STARTUP}"
     exec docker run \
@@ -336,7 +342,7 @@ EOF
         --mount type=volume,source=rpi_apt_lib_cache,destination=/var/lib/apt \
         "--workdir=${WORKDIR}" \
         --volume "${STARTUP}:/sbin/startup-script" \
-        --entrypoint="" \
+        --entrypoint="/sbin/startup-script" \
         "${NAME}" \
-        /sbin/startup-script "${@}"
+        "${@}"
 fi

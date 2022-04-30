@@ -105,9 +105,9 @@ the problem at further stages. The [`dockerify` command](bin/dockerify.md) now a
 One reason to consider using `buildx` is to be able to run on a native `arm64` node (not neessarily a Raspberry Pi), for improved performance.
 
 > Be aware that the [`pi` command](bin/pi.md) overrides the `ENTRYPOINT` at runtime
-to handle the mounting of disks and other early tasks. A possible future workaround
-would be to set an environment variable to the same value, and have the startup script
-check and run it if provided.
+to handle the mounting of disks and other early tasks. To cause your own entrypoint
+code to run, set the environment variable `ENTRYPOINT` to the same value via the `ENV`
+directive in your `Dockerfile`.
 
 ## Extracting a Pi Disk Image from Docker
 
