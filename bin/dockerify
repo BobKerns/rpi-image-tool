@@ -13,15 +13,52 @@ PI_PLATFORM="${PI_PLATFORM:-"linux/arm64"}"
 
 . "${PI_INCLUDES}/vars.sh"
 
-case "${1}" in
-    --platform)
-        PI_PLATFORM="${2}"
-        shift 2
-        ;;
-esac
+declare -a options=()
+
+while [ "${1:0:2}" = '--' ]; do
+    case "${1}" in
+        -c)
+            shift
+            set -- -c --change "${@}"
+            ;;
+        -m)
+            shift
+            set -- -c --message "${@}"
+            ;;
+        --platform)
+            PI_PLATFORM="${2}"
+            shift
+            ;;
+        --message|--change)
+            options+=( "${1} "${2}"" )
+            shift
+            ;;
+        --*=*|-*=*)
+            options+=( $(echo "${1}" | sed -E 's/=/ /') )
+            ;;
+       --*)
+            echo "Unknown option: ${1}" 1>&2
+            exit 2
+            ;;
+        # Split off combined short options
+        -??*)
+            ARG="${1}"
+            shift
+            set -- "${ARG}" "${ARG:0:2}" "-${ARG:2}" "${@}"
+            ;;
+    esac
+    shift
+done
 
 NAME="${1-pi:latest}"
 shift
+
+if [ ! -z "$*" ]; then
+    echo "Extra arguments after the name:" "${@}" 1>&2
+    exit 2
+fi
+
+options+=(--platform "${PI_PLATFORM}")
 
 echo "Creating docker image ${NAME} from the current disk image"
 echo "This will take some time."
@@ -30,7 +67,7 @@ echo "This will take some time."
 
 msg "Exporting files and importing into docker container ${NAME}"
 "${BIN}/rpi-image-tool" export-docker - \
-| docker import - "${NAME}" --platform "${PI_PLATFORM}" "$@" \
+| docker import - --platform "${PI_PLATFORM}" "${NAME}" \
 || error "Export failed." || exit
 
 msg "The image can be run via ${BIN}/pi ${NAME}"
