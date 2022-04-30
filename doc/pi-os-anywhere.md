@@ -31,6 +31,7 @@ docker run --privileged linuxkit/binfmt:v0.8
 
 It is claimed that Docker Desktop comes with it already enabled, but having enabled it manually, I cannot
 confirm this.
+
 ## Creating a pi docker image with [`dockerify` (script)](bin/dockerify.md)
 
 To create a Raspberry Pi OS `docker` image, we need to convert a Raspberry Pi OS Distro
@@ -98,8 +99,8 @@ repository. You can run your own, but that can be difficult to set up. Notably, 
 port of 5000 is in use by components of MacOS ("AirTunes").
 
 But it looks like specifying the platform correctly during
-[`docker import`](https://docs.docker.com/engine/reference/commandline/import/) will avoid the
-problem at further stages.
+[`docker import`](https://docs.docker.com/engine/reference/commandline/import/) will avoid
+the problem at further stages. The [`dockerify` command](bin/dockerify.md) now accepts a `--platform` argument which defaults to `linux/arm64`.
 
 One reason to consider using `buildx` is to be able to run on a native `arm64` node (not neessarily a Raspberry Pi), for improved performance.
 
