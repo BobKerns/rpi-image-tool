@@ -292,11 +292,16 @@ EOF
         "${NAME}" \
        "${@}"
         )"
-    docker start "${opt_interactive[@]}" --attach "${CID}" || (echo "Error: $? — commit aborted.")
-    docker commit "${CID}" ${TAG} && echo "Commited image ${TAG}"
-    if [ ! -z "${opt_rm[*]}" ]; then
-        docker rm --force --volumes "${CID}" >/dev/null
-        unset CID
+    if docker start "${opt_interactive[@]}" --attach "${CID}"; then
+        docker commit "${CID}" ${TAG} && echo "Commited image ${TAG}"
+        if [ ! -z "${opt_rm[*]}" ]; then
+            docker rm --force --volumes "${CID}" >/dev/null
+            unset CID
+        fi
+    else
+        err=$?
+        echo "Error: $? — commit aborted." 1>&2
+        exit ${err}
     fi
 else
     cat >"${STARTUP}" <<'EOF'
