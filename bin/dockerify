@@ -70,4 +70,4 @@ msg "Exporting files and importing into docker container ${NAME}"
 | docker import - --platform "${PI_PLATFORM}" "${NAME}" \
 || error "Export failed." || exit
 
-msg "The image can be run via ${BIN}/pi ${NAME}"
+msg "The image can be run via 'pi ${NAME}'"
