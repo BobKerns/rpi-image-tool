@@ -50,7 +50,7 @@ while [ "${1:0:2}" = '--' ]; do
     shift
 done
 
-NAME="${1-pi:latest}"
+NAME="${1:-pi:latest}"
 shift
 
 if [ ! -z "$*" ]; then
