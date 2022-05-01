@@ -13,6 +13,8 @@ PI_PLATFORM="${PI_PLATFORM:-"linux/arm64"}"
 
 . "${PI_INCLUDES}/vars.sh"
 
+MESSAGE="Via dockerfy: $(${BIN}/rpi-image-tool cat /work/image_src.txt)"
+
 declare -a options=()
 
 while [ "${1:0:2}" = '--' ]; do
@@ -30,7 +32,7 @@ while [ "${1:0:2}" = '--' ]; do
             shift
             ;;
         --message|--change)
-            options+=( "${1} "${2}"" )
+            MESSAGE="${2}"
             shift
             ;;
         --*=*|-*=*)
@@ -58,7 +60,10 @@ if [ ! -z "$*" ]; then
     exit 2
 fi
 
-options+=(--platform "${PI_PLATFORM}")
+options+=(
+    --platform "${PI_PLATFORM}"
+    --message "${MESSAGE}"
+    )
 
 echo "Creating docker image ${NAME} from the current disk image"
 echo "This will take some time."
