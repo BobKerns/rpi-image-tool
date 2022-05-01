@@ -70,9 +70,27 @@ echo "This will take some time."
 
 "${BIN}/rpi-image-tool" commit
 
+DOCKERDIR="/tmp/$$.$RANDOM"
+TARFILE="/${DOCKERDIR}/image.tar.gz"
+DOCKERFILE="/${DOCKERDIR}/Dockerfile"
+cleanup() {
+    rm -rf "${TARFILE}" "${DOCKERFILE}" "${DOCKERDIR}"
+}
+trap cleanup exit
+
 msg "Exporting files and importing into docker container ${NAME}"
-"${BIN}/rpi-image-tool" export-docker - \
-| docker import - --platform "${PI_PLATFORM}" "${NAME}" \
-|| error "Export failed." || exit
+mkdir -p "${DOCKERDIR}"
+${BIN}/rpi-image-tool --volume "${DOCKERDIR}:${DOCKERDIR}" export-docker "${TARFILE}"
+cat >"${DOCKERFILE}" <<EOF
+FROM scratch
+ADD image.tar.gz /
+CMD ["sh"]
+EOF
+ls -l "${DOCKERDIR}"
+DOCKER_BUILDKIT=1 docker build --platform "${PI_PLATFORM}" --tag "${NAME}" --push "${DOCKERDIR}"
+
+#"${BIN}/rpi-image-tool" export-docker - \
+#| docker import "${options[@]}" - "${NAME}" \
+#|| error "Export failed." || exit
 
 msg "The image can be run via 'pi ${NAME}'"
