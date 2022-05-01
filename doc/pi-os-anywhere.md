@@ -84,8 +84,9 @@ convenience, and the Raspberry Pi OS image can be run with no special considerat
 
 Note: <span style='color:red;'>*Experimental*</span>
 
-Once you have a `docker` image, it is straightforward to build an image with the desired components.
-The result will still be a `docker` image, but it brings us a big step closer to our goal.
+Once you have a `docker` image, it is straightforward to build an image with the desired
+components. The result will still be a `docker` image, but it brings us a big step closer
+to our goal.
 
 The only [`Dockerfile`](https://docs.docker.com/engine/reference/builder/) caveat I've
 noticed so far is that without using
@@ -101,6 +102,11 @@ port of 5000 is in use by components of MacOS ("AirTunes").
 But it looks like specifying the platform correctly during
 [`docker import`](https://docs.docker.com/engine/reference/commandline/import/) will avoid
 the problem at further stages. The [`dockerify` command](bin/dockerify.md) now accepts a `--platform` argument which defaults to `linux/arm64`.
+
+Unfortunately, there's a bug
+[docker import does not honor the --platform flag #42813](https://github.com/moby/moby/issues/42813)
+It's been fixed for the next release. In the meantime, we'll use a Dockerfile to
+accomplish the task.
 
 One reason to consider using `buildx` is to be able to run on a native `arm64` node (not neessarily a Raspberry Pi), for improved performance.
 
