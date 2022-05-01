@@ -35,4 +35,4 @@ OUT="${1-$DFLT}"
 shift
 
 # Dump the relevant parts of the filesystem to a tar file.
-tar --create --sparse --acls --xattrs --selinux --file "${OUT}" "${EXCLUDES[@]}" -C "${PI_ROOT}" --checkpoint=5000 --checkpoint-action='echo=%u %T%*\r' .
+tar --create --sparse --acls --xattrs --selinux --auto-compress --file "${OUT}" "${EXCLUDES[@]}" -C "${PI_ROOT}" --checkpoint=5000 --checkpoint-action='echo=%u %T%*\r' .
