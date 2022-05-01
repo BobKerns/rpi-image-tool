@@ -237,6 +237,11 @@ done
 exec /usr/lib/systemd/systemd --unit=basic.target
 EOF
     chmod a+x "${STARTUP}"
+    cat >"${EXECSCRIPT}" <<'EOF'
+#!/bin/bash
+${ENTRYPOINT} "${@}"
+EOF
+    chmod a+x "${EXECSCRIPT}"
     CID="$(docker create \
         "${options[@]}" \
         --volume "${PWD}:/mnt/host" \
@@ -244,6 +249,7 @@ EOF
         --mount type=volume,source=rpi_apt_cache,destination=/var/cache/apt \
         --mount type=volume,source=rpi_apt_lib_cache,destination=/var/lib/apt \
         --volume "${STARTUP}:/sbin/startup-script" \
+        --volume "${EXECSCRIPT}:/sbin/exec-script" \
         --volume "${SHUTDOWN}:/sbin/shutdown-script" \
         --entrypoint="" \
         "${privileged[@]}" \
@@ -251,17 +257,12 @@ EOF
         /sbin/startup-script
         )"
     docker start "${CID}"
-    echo >"${EXECSCRIPT}" <<'EOF'
-#!/bin/bash
-${ENTRYPOINT} "${@}"
-EOF
-    chmod a+x "${EXECSCRIPT}"
     docker exec \
         "${privileged[@]}" \
         "${exec_options[@]}" \
         "--workdir=${WORKDIR}" \
         "${CID}" \
-        "${EXECSCRIPT}" "${@}"
+        /sbin/exec-script "${@}"
      if [ "${COMMIT}" = 'yes' ]; then
         docker commit "${CID}" ${TAG}
      fi
