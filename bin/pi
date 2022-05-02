@@ -148,8 +148,12 @@ while [ "${1:0:1}" = '-' ]; do
         |--expose|--label|--label-file\
         |--volumes-from|--gpus|--ulimit\
         |--isolation|--security-opt|-stop-timeout|--stop-signal\
-        |--sysctl|--platform)
+        |--sysctl)
             options+=( "${1}" "${2}" )
+            shift
+            ;;
+        --platform)
+            PLATFORM="${2}"
             shift
             ;;
         --*=*|-*=*)
@@ -168,11 +172,14 @@ while [ "${1:0:1}" = '-' ]; do
     shift
 done
 
-# Add --privileged if requested or required
-options+=( "${privileged[@]}" )
-
 NAME="${1-pi:latest}"
 shift
+
+# Add --privileged if requested or required, and set the platform.
+options+=(
+    "${privileged[@]}"
+    --platform "${PLATFORM:-"$(docker image inspect --format '{{.Os}}/{{.Architecture}}' "${NAME}")"}"
+    )
 
 if [ -z "$*" ]; then
     # We default to bash

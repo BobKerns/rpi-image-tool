@@ -22,6 +22,9 @@ In addition to the usual `docker` options, *options*, may contain:
 * `--no-rm` | `--rm`:
   > The `pi` command defaults to `--rm`, removing the container after each run. `--no-rm`
   > overrides this, leaving the container alive.
+* `--platform` *platform*:
+  > The `pi` command defaults this to the value in the image. If the image is wrong,
+  > you can override it.
 * `--disk` *disk*:
   > *disk* can be either a filename or a name, PARTUUID, UID, LABEL, PARTLABEL, or ID, as found by
   > `setup-disk --find` *disk*.
